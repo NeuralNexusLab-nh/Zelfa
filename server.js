@@ -37,8 +37,11 @@ const MODEL_REGISTRY = {
     'gemini-2.0-flash': { provider: 'Google', maxTokens: 2000 },
 
     // OpenAI (Custom)
-    'gpt-5-nano':         { provider: 'OpenAI'},
-    'gpt-5.1-codex-mini': { provider: 'OpenAI'} 
+    'gpt-5-nano':         { provider: 'OpenAI', maxTokens: 200},
+    'gpt-4o-mini-search-preview':         { provider: 'OpenAI', maxTokens: 300},
+    'o1-mini':         { provider: 'OpenAI', maxTokens: 350},
+    'o3-mini':         { provider: 'OpenAI', maxTokens: 350},
+    'gpt-5.1-codex-mini': { provider: 'OpenAI', maxTokens: 2300} 
 };
 
 // --- MIDDLEWARE ---
@@ -159,7 +162,19 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
         if(users[username]) return res.status(400).json({error:'Exists'});
         users[username] = {
             password: await bcrypt.hash(password, 10),
-            limits: limits || { "gpt-5-mini":50, "gpt-4o-mini":50, "gpt-3.5-turbo":50 , "deepseek-v3":13, "deepseek-r1":13, "gemini-2.0-flash":75, "gpt-5-nano":20, "gpt-5.1-codex-mini":3 },
+            limits: limits || { 
+                "gpt-5-mini":50, 
+                "gpt-4o-mini":50, 
+                "gpt-3.5-turbo":50 ,
+                "deepseek-v3":13, 
+                "deepseek-r1":13, 
+                "gemini-2.0-flash":75, 
+                "gpt-5-nano":20,
+                "gpt-4o-mini-search-preview": 20,
+                "o1-mini": 3,
+                "o3-mini": 3,
+                "gpt-5.1-codex-mini":3 
+            },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
         };
         await writeJson(USERS_FILE, users);
@@ -264,17 +279,36 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[No Content]";
 
         } else if (config.provider === 'OpenAI') {
-            // OpenAI -> uses max_tokens
-            const apiRes = await fetch("https://api.openai.com/v1/responses", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEYS.OA}` },
-                body: JSON.stringify({
-                    model: model,
-                    input: finalInput
-                })
-            });
-            const data = await apiRes.json();
-            reply = data?.choices?.[0]?.text || data?.output || JSON.stringify(data);
+             const apiRes = await fetch("https://api.openai.com/v1/responses", {
+                 method: "POST",
+                 headers: { 
+                     "Content-Type": "application/json",
+                     "Authorization": `Bearer ${API_KEYS.OA}`
+                 },
+                 body: JSON.stringify({
+                     model: model,
+                     input: finalInput,
+                     max_tokens: config.maxTokens ?? 512
+                 })
+             });
+         
+             const data = await apiRes.json();
+         
+             let reply = "";
+             if (data.output_text) {
+                 reply = data.output_text;
+             } else if (Array.isArray(data.output) && data.output[0]?.text) {
+                 reply = data.output[0].text;
+             } else if (Array.isArray(data) &&
+                        data[0]?.content &&
+                        data[0].content[0]?.text) {
+                reply = data[0].content[0].text;
+        
+            } else {
+                reply = JSON.stringify(data, null, 2);
+            }
+        
+            return reply;
         }
 
         // 4. Save
