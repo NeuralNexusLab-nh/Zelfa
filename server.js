@@ -52,7 +52,7 @@ app.use((req, res, next) => {
         const origin = req.get('origin');
         const referer = req.get('referer');
         if (origin !== `https://${DOMAIN}` && (!referer || !referer.includes(DOMAIN))) {
-             if(req.hostname !== 'localhost') return res.status(403).json({ error: 'Origin Denied' });
+             if(req.hostname !== 'localhost' || req.hostname !== 'zelfa.onrender.com') return res.status(403).json({ error: 'Origin Denied' });
         }
         res.setHeader('Access-Control-Allow-Origin', `https://${DOMAIN}`);
     }
