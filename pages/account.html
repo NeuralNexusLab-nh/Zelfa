@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zelfa | User Data</title>
+    <style>
+        body { background: #0d0208; color: #00ff41; font-family: monospace; display: flex; justify-content: center; padding-top: 50px; }
+        .card { border: 1px solid #00ff41; padding: 30px; width: 400px; box-shadow: 0 0 20px #003300; }
+        li { border-bottom: 1px dashed #005500; padding: 10px 0; display: flex; justify-content: space-between; }
+        button { width: 100%; background: transparent; border: 1px solid red; color: red; padding: 10px; margin-top: 20px; cursor: pointer; }
+        button:hover { background: red; color: #000; }
+        a { color: #fff; text-decoration: none; margin-right: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div style="margin-bottom:20px;">
+            <a href="/">HOME</a>
+            <a href="/chat">TERMINAL</a>
+        </div>
+        <h2 id="usr">USER: ...</h2>
+        <h3 style="border-bottom: 1px solid #00ff41;">RPD REMAINING</h3>
+        <ul id="list" style="list-style:none; padding:0;"></ul>
+        <button onclick="out()">DISCONNECT</button>
+    </div>
+    <script>
+        async function init() {
+            const res = await fetch('/api/account', {method:'POST'});
+            const data = await res.json();
+            document.getElementById('usr').innerText = "USER: " + data.username;
+            const l = document.getElementById('list');
+            for(let m in data.remaining) {
+                l.innerHTML += `<li><span>${m}</span> <span>${data.remaining[m]}</span></li>`;
+            }
+        }
+        function out() {
+            if(confirm('END SESSION?')) fetch('/api/logout', {method:'POST'}).then(()=>location.href='/login');
+        }
+        init();
+    </script>
+</body>
+</html>
