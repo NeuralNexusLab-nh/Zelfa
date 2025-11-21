@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zelfa | Root Access</title>
+    <style>
+        body { background: #050505; color: #ff3333; font-family: 'Courier New', monospace; margin: 0; padding: 20px; }
+        /* Modal for Login */
+        #authModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 99; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .auth-box { border: 2px solid red; padding: 40px; width: 300px; text-align: center; box-shadow: 0 0 30px #550000; }
+        
+        /* Panel */
+        #panel { display: none; max-width: 900px; margin: 0 auto; border: 1px solid #ff3333; padding: 20px; }
+        h1, h3 { border-bottom: 1px dashed red; padding-bottom: 10px; }
+        
+        input { background: #110000; border: 1px solid red; color: red; padding: 8px; margin: 5px; width: 200px; }
+        button { background: #330000; color: red; border: 1px solid red; padding: 8px 15px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: red; color: #000; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #550000; padding: 8px; text-align: left; font-size: 0.9rem; }
+        .row-act { display: flex; gap: 5px; }
+    </style>
+</head>
+<body>
+
+    <!-- Login Modal -->
+    <div id="authModal">
+        <div class="auth-box">
+            <h2>ROOT_VERIFICATION</h2>
+            <input type="password" id="adminPass" placeholder="ACCESS CODE" onkeydown="if(event.key==='Enter') tryLogin()">
+            <br><br>
+            <button onclick="tryLogin()">AUTHENTICATE</button>
+            <br><br>
+            <button onclick="location.href='/'" style="border:none; background:none; font-size:0.8em;">ABORT</button>
+        </div>
+    </div>
+
+    <!-- Main Panel -->
+    <div id="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>[ SYSTEM ADMINISTRATION ]</h1>
+            <button onclick="logout()">LOGOUT</button>
+        </div>
+
+        <div style="background: #110505; padding: 15px; margin-bottom: 20px; border: 1px dotted red;">
+            <h3>CREATE NEW USER</h3>
+            <input type="text" id="newU" placeholder="Username">
+            <input type="password" id="newP" placeholder="Password">
+            <button onclick="addUser()">CREATE</button>
+        </div>
+
+        <h3>USER DATABASE</h3>
+        <button onclick="loadUsers()">REFRESH LIST</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Limits (Model: Max)</th>
+                    <th>Usage Today</th>
+                    <th>Controls</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Initial Check
+        async function checkSession() {
+            // Try to fetch list, if 403 then show login modal
+            const res = await fetch('/api/admin/users', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: 'list'})
+            });
+            if(res.ok) {
+                document.getElementById('authModal').style.display = 'none';
+                document.getElementById('panel').style.display = 'block';
+                renderUsers(await res.json());
+            }
+        }
+
+        async function tryLogin() {
+            const p = document.getElementById('adminPass').value;
+            const res = await fetch('/api/admin/login', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({password: p})
+            });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('authModal').style.display = 'none';
+                document.getElementById('panel').style.display = 'block';
+                loadUsers();
+            } else {
+                alert('ACCESS DENIED');
+                document.getElementById('adminPass').value = '';
+            }
+        }
+
+        async function loadUsers() {
+            const res = await fetch('/api/admin/users', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: 'list'})
+            });
+            if(res.ok) renderUsers(await res.json());
+        }
+
+        function renderUsers(data) {
+            const tbody = document.getElementById('tbody');
+            tbody.innerHTML = '';
+            data.users.forEach(u => {
+                let limitStr = '';
+                for(let k in u.limits) limitStr += `${k}: ${u.limits[k]}<br>`;
+                
+                let usageStr = '';
+                if(u.usage && u.usage.counts) {
+                    for(let k in u.usage.counts) usageStr += `${k}: ${u.usage.counts[k]}<br>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b style="color:#fff">${u.username}</b></td>
+                    <td style="font-size:0.8em; color:#aaa">${limitStr}</td>
+                    <td style="font-size:0.8em; color:#aaa">${usageStr || 'None'}</td>
+                    <td>
+                        <div class="row-act">
+                            <button onclick="promptLimit('${u.username}')">LIMITS</button>
+                            <button onclick="delUser('${u.username}')">DEL</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function addUser() {
+            const u = document.getElementById('newU').value;
+            const p = document.getElementById('newP').value;
+            if(!u || !p) return alert('Missing Fields');
+            
+            const res = await fetch('/api/admin/users', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: 'create', username: u, password: p})
+            });
+            if(res.ok) {
+                document.getElementById('newU').value = '';
+                document.getElementById('newP').value = '';
+                loadUsers();
+            } else {
+                alert((await res.json()).error);
+            }
+        }
+
+        async function delUser(u) {
+            if(!confirm('DELETE USER ' + u + '?')) return;
+            await fetch('/api/admin/users', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: 'delete', username: u})
+            });
+            loadUsers();
+        }
+
+        async function promptLimit(u) {
+            const m = prompt("Target Model ID (e.g. gpt-5-mini):");
+            if(!m) return;
+            const val = prompt("New Daily Limit (Integer):");
+            if(!val) return;
+
+            const limits = {};
+            limits[m] = parseInt(val);
+            await fetch('/api/admin/users', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: 'update_limit', username: u, limits: limits})
+            });
+            loadUsers();
+        }
+
+        async function logout() {
+            await fetch('/api/admin/logout', {method: 'POST'});
+            location.href = '/';
+        }
+
+        checkSession();
+    </script>
+</body>
+</html>
