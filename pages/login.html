@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zelfa | Auth</title>
+    <style>
+        body { background: #0d0208; color: #00ff41; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login { border: 2px solid #00ff41; padding: 40px; width: 300px; box-shadow: 0 0 10px #004400; }
+        input { width: 100%; box-sizing: border-box; background: #000; border: 1px solid #00ff41; color: #00ff41; padding: 10px; margin: 10px 0; }
+        button { width: 100%; background: #00ff41; color: #000; border: none; padding: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { opacity: 0.8; }
+        .err { color: red; font-size: 0.8rem; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="login">
+        <h2 style="margin-top:0;">USER_AUTH</h2>
+        <input type="text" id="u" placeholder="USERNAME">
+        <input type="password" id="p" placeholder="PASSWORD">
+        <button onclick="auth()">CONNECT</button>
+        <div id="msg" class="err"></div>
+        <div style="margin-top:10px; font-size:0.7em; text-align:center; cursor:pointer;" onclick="location.href='/'">[ CANCEL ]</div>
+    </div>
+    <script>
+        async function auth() {
+            const u = document.getElementById('u').value;
+            const p = document.getElementById('p').value;
+            const msg = document.getElementById('msg');
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u, password: p})
+                });
+                const data = await res.json();
+                if (data.success) location.href = '/chat';
+                else { msg.innerText = data.error; msg.style.display = 'block'; }
+            } catch (e) { msg.innerText = 'CONNECTION FAILURE'; msg.style.display = 'block'; }
+        }
+    </script>
+</body>
+</html>
