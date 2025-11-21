@@ -38,7 +38,6 @@ const MODEL_REGISTRY = {
 
     // OpenAI (Custom)
     'gpt-5-nano':         { provider: 'OpenAI'},
-    'gpt-4o-mini-search-preview':  { provider: 'OpenAI'},
     'o3-mini':         { provider: 'OpenAI'},
     'gpt-5.1-codex-mini': { provider: 'OpenAI'} 
 };
@@ -169,8 +168,7 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
                 "deepseek-r1":13, 
                 "gemini-2.0-flash":75, 
                 "gpt-5-nano": 5,
-                "gpt-4o-mini-search-preview": 5,
-                "o3-mini": 0,
+                "o3-mini": 1,
                 "gpt-5.1-codex-mini": 0
             },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
@@ -255,7 +253,6 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             if (apiRes.status === 429) throw new Error("Provider Rate Limit");
             const data = await apiRes.json();
             reply = data?.choices?.[0]?.message?.content || "[No Content]";
-            console.log("ChatAnyWhere Raw Content: " + JSON.stringify(data));
 
         } else if (config.provider === 'Google') {
             const apiRes = await fetch(
@@ -270,7 +267,6 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             );
             const data = await apiRes.json();
             reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[No Content]";
-            console.log("Google AI Studio Raw Content: " + JSON.stringify(data));
 
         } else if (config.provider === 'OpenAI') {
             const apiRes = await fetch("https://api.openai.com/v1/responses", {
@@ -285,21 +281,8 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 })
             });
             const data = await apiRes.json();
-
-            console.log("OpenAI Raw Content: " + JSON.stringify(data));
-            if (data.output_text) {
-                reply = data.output_text;
-            } else if (Array.isArray(data.output) && data.output[0]?.text) {
-                reply = data.output[0].text;
-            } else if (Array.isArray(data) &&
-                       data[0]?.content &&
-                       data[0].content[0]?.text) {
-                reply = data[0].content[0].text;
-            } else if (data.error) {
-                throw new Error(data.error.message);
-            } else {
-                reply = "[No Content]";
-            }
+            reply = output[1].content[0].text || "[No Content]";
+            console.log("OpenAI API used token: " + data.usage.total_tokens)
         }
 
         // 4. Save chat history
