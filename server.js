@@ -37,10 +37,10 @@ const MODEL_REGISTRY = {
     'gemini-2.0-flash': { provider: 'Google', maxTokens: 2000 },
 
     // OpenAI (Custom)
-    'gpt-5-nano':         { provider: 'OpenAI', maxTokens: 200},
-    'gpt-4o-mini-search-preview':         { provider: 'OpenAI', maxTokens: 300},
-    'o1-mini':         { provider: 'OpenAI', maxTokens: 350},
-    'o3-mini':         { provider: 'OpenAI', maxTokens: 350},
+    'gpt-5-nano':         { provider: 'OpenAI', maxTokens: 500},
+    'gpt-4o-mini-search-preview':         { provider: 'OpenAI', maxTokens: 600},
+    'o1-mini':         { provider: 'OpenAI', maxTokens: 650},
+    'o3-mini':         { provider: 'OpenAI', maxTokens: 650},
     'gpt-5.1-codex-mini': { provider: 'OpenAI', maxTokens: 2300} 
 };
 
@@ -169,11 +169,11 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
                 "deepseek-v3":13, 
                 "deepseek-r1":13, 
                 "gemini-2.0-flash":75, 
-                "gpt-5-nano":20,
-                "gpt-4o-mini-search-preview": 20,
-                "o1-mini": 3,
-                "o3-mini": 3,
-                "gpt-5.1-codex-mini":3 
+                "gpt-5-nano": 10,
+                "gpt-4o-mini-search-preview": 10,
+                "o1-mini": 2,
+                "o3-mini": 2,
+                "gpt-5.1-codex-mini": 1
             },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
         };
