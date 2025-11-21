@@ -285,7 +285,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 body: JSON.stringify({
                     model: model,
                     input: finalInput,
-                    max_tokens: config.maxTokens ?? 512
+                    max_output_tokens: config.maxTokens ?? 512
                 })
             });
             const data = await apiRes.json();
