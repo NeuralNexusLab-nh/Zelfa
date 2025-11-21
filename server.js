@@ -37,8 +37,8 @@ const MODEL_REGISTRY = {
     'gemini-2.0-flash': { provider: 'Google', maxTokens: 2000 },
 
     // OpenAI (Custom)
-    'gpt-5-nano':         { provider: 'OpenAI', maxTokens: 150 },  // 你指定 150
-    'gpt-5.1-codex-mini': { provider: 'OpenAI', maxTokens: 2500 }  // 你指定 2500
+    'gpt-5-nano':         { provider: 'OpenAI'},
+    'gpt-5.1-codex-mini': { provider: 'OpenAI'} 
 };
 
 // --- MIDDLEWARE ---
@@ -159,7 +159,7 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
         if(users[username]) return res.status(400).json({error:'Exists'});
         users[username] = {
             password: await bcrypt.hash(password, 10),
-            limits: limits || { "gpt-5-mini":50, "gpt-4o-mini":50, "gpt-3.5-turbo":50 , "deepseek-v3":13, "deepseek-r1":13, "gemini-2.0-flash":75, "gpt-5-nano":25, "gpt-5.1-codex-mini":3 },
+            limits: limits || { "gpt-5-mini":50, "gpt-4o-mini":50, "gpt-3.5-turbo":50 , "deepseek-v3":13, "deepseek-r1":13, "gemini-2.0-flash":75, "gpt-5-nano":20, "gpt-5.1-codex-mini":3 },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
         };
         await writeJson(USERS_FILE, users);
@@ -270,8 +270,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEYS.OA}` },
                 body: JSON.stringify({
                     model: model,
-                    input: finalInput,
-                    max_tokens: config.maxTokens // Correct param for OpenAI
+                    input: finalInput
                 })
             });
             const data = await apiRes.json();
