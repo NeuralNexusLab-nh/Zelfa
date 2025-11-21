@@ -159,7 +159,7 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
         if(users[username]) return res.status(400).json({error:'Exists'});
         users[username] = {
             password: await bcrypt.hash(password, 10),
-            limits: limits || { "gpt-5-mini":75, "gpt-4o-mini":75, "gpt-3.5-turbo":75  , "deepseek-v3":13, "deepseek-r1":13, "gemini-2.0-flash":100, "gpt-5-nano":25, "gpt-5.1-codex-mini":3 },
+            limits: limits || { "gpt-5-mini":50, "gpt-4o-mini":50, "gpt-3.5-turbo":50 , "deepseek-v3":13, "deepseek-r1":13, "gemini-2.0-flash":75, "gpt-5-nano":25, "gpt-5.1-codex-mini":3 },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
         };
         await writeJson(USERS_FILE, users);
