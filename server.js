@@ -229,7 +229,7 @@ app.post('/api/chat/action', requireUserAuth, async (req, res) => {
 // --- INFERENCE ---
 app.post('/api/models', requireUserAuth, async (req, res) => {
     const { model, prompt, chatId, messages } = req.body;
-    
+
     // 1. Validate Config
     const config = MODEL_REGISTRY[model];
     if (!config) return res.status(400).json({ error: `Invalid Model: ${model}` });
@@ -240,12 +240,12 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
     // 3. Context
     const historyStr = (messages && messages.length) ? " (History: " + messages.map(m => `${m.role}: ${m.content}`).join(" | ") + ")" : "";
     const finalInput = `${prompt}${historyStr}`;
-    let reply = "";
     const fetch = (await import('node-fetch')).default;
 
     try {
+        let reply = "";
+
         if (config.provider === 'ChatAnyWhere') {
-            // ChatAnyWhere (OpenAI Compatible) -> uses max_tokens
             const apiRes = await fetch("https://api.chatanywhere.tech/v1/chat/completions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEYS.CAW}` },
@@ -253,15 +253,14 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                     model: model,
                     messages: [{ role: "user", content: finalInput }],
                     temperature: 1, top_p: 1,
-                    max_tokens: config.maxTokens // Correct param for CAW/OpenAI
+                    max_tokens: config.maxTokens
                 })
             });
-            if(apiRes.status===429) throw new Error("Provider Rate Limit");
+            if (apiRes.status === 429) throw new Error("Provider Rate Limit");
             const data = await apiRes.json();
             reply = data?.choices?.[0]?.message?.content || "[No Content]";
 
         } else if (config.provider === 'Google') {
-            // Google Gemini -> uses maxOutputTokens
             const apiRes = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEYS.GAS}`,
                 {
@@ -269,9 +268,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: finalInput }] }],
-                        generationConfig: {
-                            maxOutputTokens: config.maxTokens // Correct param for Google
-                        }
+                        generationConfig: { maxOutputTokens: config.maxTokens }
                     })
                 }
             );
@@ -279,46 +276,45 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[No Content]";
 
         } else if (config.provider === 'OpenAI') {
-             const apiRes = await fetch("https://api.openai.com/v1/responses", {
-                 method: "POST",
-                 headers: { 
-                     "Content-Type": "application/json",
-                     "Authorization": `Bearer ${API_KEYS.OA}`
-                 },
-                 body: JSON.stringify({
-                     model: model,
-                     input: finalInput,
-                     max_tokens: config.maxTokens ?? 512
-                 })
-             });
-         
-             const data = await apiRes.json();
-         
-             let reply = "";
-             if (data.output_text) {
-                 reply = data.output_text;
-             } else if (Array.isArray(data.output) && data.output[0]?.text) {
-                 reply = data.output[0].text;
-             } else if (Array.isArray(data) &&
-                        data[0]?.content &&
-                        data[0].content[0]?.text) {
+            const apiRes = await fetch("https://api.openai.com/v1/responses", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${API_KEYS.OA}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    input: finalInput,
+                    max_tokens: config.maxTokens ?? 512
+                })
+            });
+            const data = await apiRes.json();
+
+            // 🔑 統一解析 OpenAI Responses API
+            if (data.output_text) {
+                reply = data.output_text;
+            } else if (Array.isArray(data.output) && data.output[0]?.text) {
+                reply = data.output[0].text;
+            } else if (Array.isArray(data) &&
+                       data[0]?.content &&
+                       data[0].content[0]?.text) {
                 reply = data[0].content[0].text;
-        
+            } else if (data.error) {
+                throw new Error(data.error.message);
             } else {
-                reply = JSON.stringify(data, null, 2);
+                reply = "[No Content]";
             }
-        
-            return reply;
         }
 
-        // 4. Save
+        // 4. Save chat history
         const h = await readJson(HISTORY_FILE);
-        let activeId = chatId || uuidv4();
+        const activeId = chatId || uuidv4();
         if (!h[activeId]) h[activeId] = { owner: req.user, title: prompt.substring(0, 20) || "New Chat", messages: [] };
         h[activeId].messages.push({ role: 'user', content: prompt });
         h[activeId].messages.push({ role: 'ai', content: reply });
         await writeJson(HISTORY_FILE, h);
 
+        // 5. Return to frontend
         res.json({ reply, chatId: activeId });
 
     } catch (e) {
@@ -326,5 +322,6 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
+
 
 app.listen(PORT, () => console.log(`Zelfa Core Online: ${PORT}`));
