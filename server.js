@@ -259,6 +259,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             if (apiRes.status === 429) throw new Error("Provider Rate Limit");
             const data = await apiRes.json();
             reply = data?.choices?.[0]?.message?.content || "[No Content]";
+            console.log("ChatAnyWhere Raw Content: " + JSON.stringify(data));
 
         } else if (config.provider === 'Google') {
             const apiRes = await fetch(
@@ -274,6 +275,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             );
             const data = await apiRes.json();
             reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[No Content]";
+            console.log("Google AI Studio Raw Content: " + JSON.stringify(data));
 
         } else if (config.provider === 'OpenAI') {
             const apiRes = await fetch("https://api.openai.com/v1/responses", {
@@ -290,7 +292,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             });
             const data = await apiRes.json();
 
-            // 🔑 統一解析 OpenAI Responses API
+            console.log("OpenAI Raw Content: " + JSON.stringify(data));
             if (data.output_text) {
                 reply = data.output_text;
             } else if (Array.isArray(data.output) && data.output[0]?.text) {
