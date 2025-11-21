@@ -27,21 +27,20 @@ const API_KEYS = {
 // --- MODEL REGISTRY (Configuration) ---
 const MODEL_REGISTRY = {
     // ChatAnyWhere (OpenAI Compatible)
-    'gpt-5-mini':       { provider: 'ChatAnyWhere', maxTokens: 3000 }, 
-    'deepseek-v3':      { provider: 'ChatAnyWhere', maxTokens: 3000 },
-    'gpt-3.5-turbo':      { provider: 'ChatAnyWhere', maxTokens: 3000 },
-    'deepseek-r1':      { provider: 'ChatAnyWhere', maxTokens: 3000 },
-    'gpt-4o-mini':      { provider: 'ChatAnyWhere', maxTokens: 3000 },
+    'gpt-5-mini':       { provider: 'ChatAnyWhere'}, 
+    'deepseek-v3':      { provider: 'ChatAnyWhere'},
+    'gpt-3.5-turbo':      { provider: 'ChatAnyWhere'},
+    'deepseek-r1':      { provider: 'ChatAnyWhere'},
+    'gpt-4o-mini':      { provider: 'ChatAnyWhere'},
 
     // Google (Gemini)
-    'gemini-2.0-flash': { provider: 'Google', maxTokens: 2000 },
+    'gemini-2.0-flash': { provider: 'Google'},
 
     // OpenAI (Custom)
-    'gpt-5-nano':         { provider: 'OpenAI', maxTokens: 500},
-    'gpt-4o-mini-search-preview':         { provider: 'OpenAI', maxTokens: 600},
-    'o1-mini':         { provider: 'OpenAI', maxTokens: 650},
-    'o3-mini':         { provider: 'OpenAI', maxTokens: 650},
-    'gpt-5.1-codex-mini': { provider: 'OpenAI', maxTokens: 2300} 
+    'gpt-5-nano':         { provider: 'OpenAI'},
+    'gpt-4o-mini-search-preview':  { provider: 'OpenAI'},
+    'o3-mini':         { provider: 'OpenAI'},
+    'gpt-5.1-codex-mini': { provider: 'OpenAI'} 
 };
 
 // --- MIDDLEWARE ---
@@ -169,11 +168,10 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
                 "deepseek-v3":13, 
                 "deepseek-r1":13, 
                 "gemini-2.0-flash":75, 
-                "gpt-5-nano": 10,
-                "gpt-4o-mini-search-preview": 10,
-                "o1-mini": 2,
-                "o3-mini": 2,
-                "gpt-5.1-codex-mini": 1
+                "gpt-5-nano": 5,
+                "gpt-4o-mini-search-preview": 5,
+                "o3-mini": 0,
+                "gpt-5.1-codex-mini": 0
             },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
         };
@@ -251,9 +249,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEYS.CAW}` },
                 body: JSON.stringify({
                     model: model,
-                    messages: [{ role: "user", content: finalInput }],
-                    temperature: 1, top_p: 1,
-                    max_tokens: config.maxTokens
+                    messages: [{ role: "user", content: finalInput }]
                 })
             });
             if (apiRes.status === 429) throw new Error("Provider Rate Limit");
@@ -268,8 +264,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: finalInput }] }],
-                        generationConfig: { maxOutputTokens: config.maxTokens }
+                        contents: [{ parts: [{ text: finalInput }] }]
                     })
                 }
             );
@@ -286,8 +281,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 },
                 body: JSON.stringify({
                     model: model,
-                    input: finalInput,
-                    max_output_tokens: config.maxTokens ?? 512
+                    input: finalInput + ` (Your a model named ${model}, your here to help user. Remember, be grateful.)`
                 })
             });
             const data = await apiRes.json();
