@@ -68,6 +68,7 @@
             <div class="controls">
                 <select id="modelSel">
                     <option value="gemini-2.0-flash">Gemini 2.0 Flash (Google AI Studio)</option>
+                    <option value="zetahack">Zeta Hack (Zeta AI)</option>
                     <option value="gpt-5-mini">GPT-5-Mini (ChatAnyWhere)</option>
                     <option value="gpt-4o-mini">GPT-4o-Mini (ChatAnyWhere)</option>
                     <option value="gpt-3.5-turbo">GPT-3.5-Turbo (ChatAnyWhere)</option>
@@ -147,7 +148,7 @@
                     clearInterval(interval);
                     div.innerHTML = marked.parse(text);
                 }
-            }, 15);
+            }, 1);
         } else {
             div.innerHTML = role === 'ai' ? marked.parse(text) : text.replace(/\n/g, '<br>');
             log.appendChild(div);
