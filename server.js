@@ -281,7 +281,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 })
             });
             const data = await apiRes.json();
-            reply = output[1].content[0].text || "[No Content]";
+            reply = data.output[1].content[0].text || "[No Content]";
             console.log("OpenAI API used token: " + data.usage.total_tokens)
         }
 
