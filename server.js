@@ -162,13 +162,13 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
         if(users[username]) return res.status(400).json({error:'Exists'});
         
         const defaultOllamaLimits = {
-            "cogito-2.1:671b": 30,
-            "glm-4.6": 30,
-            "kimi-k2:1t": 30,
-            "kimi-k2-thinking": 30,
-            "qwen3-coder:480b": 30,
-            "deepseek-v3.1:671b": 30,
-            "gpt-oss:120b": 30
+            "cogito-2.1:671b": 50,
+            "glm-4.6": 50,
+            "kimi-k2:1t": 50,
+            "kimi-k2-thinking": 50,
+            "qwen3-coder:480b": 50,
+            "deepseek-v3.1:671b": 50,
+            "gpt-oss:120b": 50
         };
 
         const adminOllamaLimits = {
@@ -284,7 +284,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 },
                 body: JSON.stringify({
                     model: model,
-                    prompt: finalInput,
+                    prompt: finalInput + ` (Your a AI model named ${model}, your here to help user or chat to user. Remember, be polite and happy.)`,
                     stream: false
                 })
             });
@@ -300,7 +300,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: finalInput }] }]
+                        contents: [{ parts: [{ text: finalInput + ` (Your a AI model named Gemini, your here to help user or chat to user. Remember, be polite and happy.)`}] }]
                     })
                 }
             );
@@ -316,7 +316,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 },
                 body: JSON.stringify({
                     model: model,
-                    input: finalInput + ` (Your a model named ${model}, your here to help user. Remember, be grateful.)`
+                    input: finalInput + ` (Your a model named ${model}, your here to help user or chat to user. Remember, be polite and happy.)`
                 })
             });
             const data = await apiRes.json();
