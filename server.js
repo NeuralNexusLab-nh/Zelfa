@@ -19,28 +19,28 @@ const ADMIN_PASSWORD = process.env.ADMIN ? process.env.ADMIN.trim() : null;
 if(!ADMIN_PASSWORD) console.error("⚠️ WARNING: process.env.ADMIN is not set!");
 
 const API_KEYS = {
-    CAW: process.env.CAWAPI,
     GAS: process.env.GASAPI,
-    OA: process.env.OAAPI
+    OA: process.env.OAAPI,
+    OLM: process.env.OLMAPI // Added Ollama API Key
 };
 
 // --- MODEL REGISTRY (Configuration) ---
 const MODEL_REGISTRY = {
-    //zeta
-    'zetahack':         { provider: 'ZetaAI'},
-    // ChatAnyWhere (OpenAI Compatible)
-    'gpt-5-mini':       { provider: 'ChatAnyWhere'}, 
-    'deepseek-v3':      { provider: 'ChatAnyWhere'},
-    'gpt-3.5-turbo':      { provider: 'ChatAnyWhere'},
-    'deepseek-r1':      { provider: 'ChatAnyWhere'},
-    'gpt-4o-mini':      { provider: 'ChatAnyWhere'},
+    // Ollama Models (New)
+    'cogito-2.1:671b':    { provider: 'Ollama'},
+    'glm-4.6':            { provider: 'Ollama'},
+    'kimi-k2:1t':         { provider: 'Ollama'},
+    'kimi-k2-thinking':   { provider: 'Ollama'},
+    'qwen3-coder:480b':   { provider: 'Ollama'},
+    'deepseek-v3.1:671b': { provider: 'Ollama'},
+    'gpt-oss:120b':       { provider: 'Ollama'},
 
     // Google (Gemini)
     'gemini-2.0-flash': { provider: 'Google'},
 
     // OpenAI (Custom)
     'gpt-5-nano':         { provider: 'OpenAI'},
-    'o3-mini':         { provider: 'OpenAI'},
+    'o3-mini':            { provider: 'OpenAI'},
     'gpt-5.1-codex-mini': { provider: 'OpenAI'} 
 };
 
@@ -160,16 +160,32 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
     if(action === 'list') return res.json({users: Object.keys(users).map(u=>({username:u, limits:users[u].limits, usage:users[u].usage}))});
     if(action === 'create') {
         if(users[username]) return res.status(400).json({error:'Exists'});
+        
+        const defaultOllamaLimits = {
+            "cogito-2.1:671b": 30,
+            "glm-4.6": 30,
+            "kimi-k2:1t": 30,
+            "kimi-k2-thinking": 30,
+            "qwen3-coder:480b": 30,
+            "deepseek-v3.1:671b": 30,
+            "gpt-oss:120b": 30
+        };
+
+        const adminOllamaLimits = {
+            "cogito-2.1:671b": 10000,
+            "glm-4.6": 10000,
+            "kimi-k2:1t": 10000,
+            "kimi-k2-thinking": 10000,
+            "qwen3-coder:480b": 10000,
+            "deepseek-v3.1:671b": 10000,
+            "gpt-oss:120b": 10000
+        };
+
         if (username == "NeuralNexusLab" || username == "admin") {
           users[username] = {
             password: await bcrypt.hash(password, 10),
             limits: { 
-                "zetahack": 10000, 
-                "gpt-5-mini": 10000, 
-                "gpt-4o-mini": 10000, 
-                "gpt-3.5-turbo": 10000 ,
-                "deepseek-v3": 10000, 
-                "deepseek-r1": 10000, 
+                ...adminOllamaLimits,
                 "gemini-2.0-flash": 10000, 
                 "gpt-5-nano": 10000,
                 "o3-mini": 10000,
@@ -181,12 +197,7 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
           users[username] = {
               password: await bcrypt.hash(password, 10),
               limits: limits || { 
-                  "zetahack": 1000, 
-                  "gpt-5-mini": 50, 
-                  "gpt-4o-mini": 50, 
-                  "gpt-3.5-turbo": 50 ,
-                  "deepseek-v3": 13, 
-                  "deepseek-r1": 13, 
+                  ...defaultOllamaLimits,
                   "gemini-2.0-flash": 75, 
                   "gpt-5-nano": 5,
                   "o3-mini": 0,
@@ -263,18 +274,24 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
     try {
         let reply = "";
 
-        if (config.provider === 'ChatAnyWhere') {
-            const apiRes = await fetch("https://api.chatanywhere.tech/v1/chat/completions", {
+        if (config.provider === 'Ollama') {
+            // Ollama API Implementation
+            const apiRes = await fetch("https://ollama.com/api/generate", {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEYS.CAW}` },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${API_KEYS.OLM}`
+                },
                 body: JSON.stringify({
                     model: model,
-                    messages: [{ role: "user", content: finalInput }]
+                    prompt: finalInput,
+                    stream: false
                 })
             });
-            if (apiRes.status === 429) throw new Error("Provider Rate Limit");
+            
             const data = await apiRes.json();
-            reply = data?.choices?.[0]?.message?.content || "[No Content]";
+            if (data.error) throw new Error(data.error);
+            reply = data.response || "[No Content]";
 
         } else if (config.provider === 'Google') {
             const apiRes = await fetch(
@@ -304,10 +321,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             });
             const data = await apiRes.json();
             reply = data.output[1].content[0].text || "[No Content]";
-            console.log("OpenAI API used token: " + data.usage.total_tokens)
-        } else if (config.provider === "ZetaAI") {
-            const res = await fetch("https://zeta.nethacker.cloud/v1?prompt=" + prompt);
-            reply = await res || "[No Content]";
+            if(data.usage) console.log("OpenAI API used token: " + data.usage.total_tokens);
         }
 
         // 4. Save chat history
@@ -326,6 +340,5 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
-
 
 app.listen(PORT, () => console.log(`Zelfa Core Online: ${PORT}`));
