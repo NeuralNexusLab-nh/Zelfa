@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
+app.set('trust proxy', true);
 const PORT = process.env.PORT || 3000;
 const DOMAIN = 'zelfa.nethacker.cloud';
 
@@ -322,7 +323,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             });
             const data = await apiRes.json();
             reply = data.output[1].content[0].text || "[No Content]";
-            if(data.usage) console.log("OpenAI API used token: " + data.usage.total_tokens);
+            if(data.usage) console.log("OpenAI API used token: " + data.usage.total_tokens + " IP: ", req.ip);
         }
 
         // 4. Save chat history
