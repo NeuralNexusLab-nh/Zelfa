@@ -160,22 +160,41 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
     if(action === 'list') return res.json({users: Object.keys(users).map(u=>({username:u, limits:users[u].limits, usage:users[u].usage}))});
     if(action === 'create') {
         if(users[username]) return res.status(400).json({error:'Exists'});
-        users[username] = {
+        if (username == "NeuralNexusLab" || username == "admin") {
+          users[username] = {
             password: await bcrypt.hash(password, 10),
-            limits: limits || { 
-                "zetahack":1000, 
-                "gpt-5-mini":50, 
-                "gpt-4o-mini":50, 
-                "gpt-3.5-turbo":50 ,
-                "deepseek-v3":13, 
-                "deepseek-r1":13, 
-                "gemini-2.0-flash":75, 
-                "gpt-5-nano": 5,
-                "o3-mini": 0,
-                "gpt-5.1-codex-mini": 0
+            limits: { 
+                "zetahack": 10000, 
+                "gpt-5-mini": 10000, 
+                "gpt-4o-mini": 10000, 
+                "gpt-3.5-turbo": 10000 ,
+                "deepseek-v3": 10000, 
+                "deepseek-r1": 10000, 
+                "gemini-2.0-flash": 10000, 
+                "gpt-5-nano": 10000,
+                "o3-mini": 10000,
+                "gpt-5.1-codex-mini": 10000
             },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
-        };
+          };
+        } else {
+          users[username] = {
+              password: await bcrypt.hash(password, 10),
+              limits: limits || { 
+                  "zetahack": 1000, 
+                  "gpt-5-mini": 50, 
+                  "gpt-4o-mini": 50, 
+                  "gpt-3.5-turbo": 50 ,
+                  "deepseek-v3": 13, 
+                  "deepseek-r1": 13, 
+                  "gemini-2.0-flash": 75, 
+                  "gpt-5-nano": 5,
+                  "o3-mini": 0,
+                  "gpt-5.1-codex-mini": 0
+              },
+              usage: { date: new Date().toISOString().split('T')[0], counts: {} }
+          };
+        }
         await writeJson(USERS_FILE, users);
         return res.json({success:true});
     }
@@ -288,7 +307,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             console.log("OpenAI API used token: " + data.usage.total_tokens)
         } else if (config.provider === "ZetaAI") {
             const res = await fetch("https://zeta.nethacker.cloud/v1?prompt=" + prompt);
-            reply = res || "[No Content]";
+            reply = await res || "[No Content]";
         }
 
         // 4. Save chat history
