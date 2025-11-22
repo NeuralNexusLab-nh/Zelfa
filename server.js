@@ -12,11 +12,12 @@ const PORT = process.env.PORT || 3000;
 const DOMAIN = 'zelfa.nethacker.cloud';
 
 // --- SECURITY CONFIG ---
-const ENCRYPTION_KEY = Buffer.from("d7f8a9e2b1c4d3f5a6e8c0b7d9f2a1c5e8b4d3a6f9c0e7b2d5a8f1c4e3b6d9a2", 'hex');
+const ENCRYPTION_KEY = Buffer.from(process.env.KEY, 'hex');
 const IV_LENGTH = 16;
 const ADMIN_PASSWORD = process.env.ADMIN ? process.env.ADMIN.trim() : null;
 
 if(!ADMIN_PASSWORD) console.error("⚠️ WARNING: process.env.ADMIN is not set!");
+if(!ENCRYPTION_KEY) console.error("⚠️ WARNING: process.env.KEY is not set!");
 
 const API_KEYS = {
     GAS: process.env.GASAPI,
