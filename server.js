@@ -162,13 +162,13 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
         if(users[username]) return res.status(400).json({error:'Exists'});
         
         const defaultOllamaLimits = {
-            "cogito-2.1:671b": 50,
-            "glm-4.6": 50,
-            "kimi-k2:1t": 50,
-            "kimi-k2-thinking": 50,
-            "qwen3-coder:480b": 50,
-            "deepseek-v3.1:671b": 50,
-            "gpt-oss:120b": 50
+            "cogito-2.1:671b": 25,
+            "glm-4.6": 25,
+            "kimi-k2:1t": 25,
+            "kimi-k2-thinking": 25,
+            "qwen3-coder:480b": 25,
+            "deepseek-v3.1:671b": 25,
+            "gpt-oss:120b": 25
         };
 
         const adminOllamaLimits = {
