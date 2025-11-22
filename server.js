@@ -26,6 +26,8 @@ const API_KEYS = {
 
 // --- MODEL REGISTRY (Configuration) ---
 const MODEL_REGISTRY = {
+    //zeta
+    'zetahack':         { provider: 'ZetaAI'},
     // ChatAnyWhere (OpenAI Compatible)
     'gpt-5-mini':       { provider: 'ChatAnyWhere'}, 
     'deepseek-v3':      { provider: 'ChatAnyWhere'},
@@ -161,6 +163,7 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
         users[username] = {
             password: await bcrypt.hash(password, 10),
             limits: limits || { 
+                "zetahack":1000, 
                 "gpt-5-mini":50, 
                 "gpt-4o-mini":50, 
                 "gpt-3.5-turbo":50 ,
@@ -168,7 +171,7 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
                 "deepseek-r1":13, 
                 "gemini-2.0-flash":75, 
                 "gpt-5-nano": 5,
-                "o3-mini": 1,
+                "o3-mini": 0,
                 "gpt-5.1-codex-mini": 0
             },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
@@ -283,6 +286,9 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             const data = await apiRes.json();
             reply = data.output[1].content[0].text || "[No Content]";
             console.log("OpenAI API used token: " + data.usage.total_tokens)
+        } else if (config.provider === "ZetaAI") {
+            const res = await fetch("https://zeta.nethacker.cloud/v1?prompt=" + prompt);
+            reply = res || "[No Content]";
         }
 
         // 4. Save chat history
