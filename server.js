@@ -449,22 +449,35 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
             reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[No Content]";
         }
 
-        // OpenAI
         else if (config.provider === "OpenAI") {
-            const apiRes = await fetch("https://api.openai.com/v1/responses", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${API_KEYS.OA}`
-                },
-                body: JSON.stringify({
-                    model,
-                    input: finalInput
-                })
-            });
-
+            if (model === 'o3-mini' || model === 'gpt-5.1-codex-mini') {
+                const apiRes = await fetch("https://api.openai.com/v1/responses", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${API_KEYS.OA}`
+                    },
+                    body: JSON.stringify({
+                        model,
+                        input: finalInput,
+                        reasoning: {"effort": "low"}
+                    })
+                });
+            } else if (model === 'gpt-5.1-nano') {
+                const apiRes = await fetch("https://api.openai.com/v1/responses", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${API_KEYS.OA}`
+                    },
+                    body: JSON.stringify({
+                        model,
+                        input: finalInput
+                    })
+                });
+            }
             const data = await apiRes.json();
-            reply = data?.output?.[0]?.content?.[0]?.text || "[No Content]";
+            reply = data?.output?.[1]?.content?.[0]?.text || "[No Content]";
         }
 
         // Save Chat
