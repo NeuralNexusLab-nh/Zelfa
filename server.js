@@ -284,7 +284,7 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
             } : {
                 ...defaultOllamaLimits,
                 "gemini-2.0-flash": 75,
-                "gpt-5-nano": 5,
+                "gpt-5-nano": 4,
                 "o3-mini": 0,
                 "gpt-5.1-codex-mini": 0
             },
@@ -450,32 +450,18 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
         }
 
         else if (config.provider === "OpenAI") {
-            if (model === 'o3-mini' || model === 'gpt-5.1-codex-mini') {
-                const apiRes = await fetch("https://api.openai.com/v1/responses", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${API_KEYS.OA}`
-                    },
-                    body: JSON.stringify({
-                        model,
-                        input: finalInput,
-                        reasoning: {"effort": "low"}
-                    })
-                });
-            } else if (model === 'gpt-5.1-nano') {
-                const apiRes = await fetch("https://api.openai.com/v1/responses", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${API_KEYS.OA}`
-                    },
-                    body: JSON.stringify({
-                        model,
-                        input: finalInput
-                    })
-                });
-            }
+            const apiRes = await fetch("https://api.openai.com/v1/responses", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${API_KEYS.OA}`
+                },
+                body: JSON.stringify({
+                    model,
+                    input: finalInput,
+                    reasoning: {"effort": "low"}
+                })
+            });
             const data = await apiRes.json();
             reply = data?.output?.[1]?.content?.[0]?.text || "[No Content]";
         }
