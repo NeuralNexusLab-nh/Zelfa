@@ -252,23 +252,23 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
         if (users[username]) return res.status(400).json({ error: "Exists" });
 
         const defaultOllamaLimits = {
-            "cogito-2.1:671b": 25,
-            "glm-4.6": 25,
+            "gpt-oss:120b": 25,
+            "deepseek-v3.1:671b": 25,
+            "qwen3-coder:480b": 25,
             "kimi-k2:1t": 25,
             "kimi-k2-thinking": 25,
-            "qwen3-coder:480b": 25,
-            "deepseek-v3.1:671b": 25,
-            "gpt-oss:120b": 25
+            "cogito-2.1:671b": 25,
+            "glm-4.6": 25
         };
 
         const adminOllamaLimits = {
-            "cogito-2.1:671b": 10000,
-            "glm-4.6": 10000,
+            "gpt-oss:120b": 10000,
+            "deepseek-v3.1:671b": 10000,
+            "qwen3-coder:480b": 10000,
             "kimi-k2:1t": 10000,
             "kimi-k2-thinking": 10000,
-            "qwen3-coder:480b": 10000,
-            "deepseek-v3.1:671b": 10000,
-            "gpt-oss:120b": 10000
+            "cogito-2.1:671b": 10000,
+            "glm-4.6": 10000
         };
 
         const isAdminUser = username === "NeuralNexusLab" || username === "admin";
@@ -279,13 +279,21 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
                 ...adminOllamaLimits,
                 "gemini-2.0-flash": 10000,
                 "gpt-5-nano": 10000,
-                "o3-mini": 10000,
+                "gpt-4.1-nano": 10000,
+                "gpt-4o-mini": 10000,
+                "gpt-3.5-turbo": 10000,
+                "gpt-4.1-mini": 10000,
+                "gpt-5-mini": 10000,
                 "gpt-5.1-codex-mini": 10000
             } : {
                 ...defaultOllamaLimits,
-                "gemini-2.0-flash": 75,
-                "gpt-5-nano": 4,
-                "o3-mini": 0,
+                "gemini-2.0-flash": 50,
+                "gpt-5-nano": 3,
+                "gpt-4.1-nano": 3,
+                "gpt-4o-mini": 3,
+                "gpt-3.5-turbo": 1,
+                "gpt-4.1-mini": 0,
+                "gpt-5-mini": 0,
                 "gpt-5.1-codex-mini": 0
             },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
@@ -458,8 +466,7 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 },
                 body: JSON.stringify({
                     model,
-                    input: finalInput,
-                    reasoning: {"effort": "low"}
+                    input: finalInput
                 })
             });
             const data = await apiRes.json();
