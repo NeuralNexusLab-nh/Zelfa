@@ -457,7 +457,8 @@ app.post('/api/models', requireUserAuth, async (req, res) => {
                 },
                 body: JSON.stringify({
                     model,
-                    input: finalInput
+                    input: finalInput,
+                    reasoning: {"effort": "low"}
                 })
             });
             const data = await apiRes.json();
