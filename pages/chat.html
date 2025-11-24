@@ -1,72 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Zelfa | Chat</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Zelfa | Chat</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Full Screen Hacker UI */
+        body { margin: 0; background: #0d0208; color: #00ff41; font-family: 'Courier New', monospace; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background: #020a02; border-right: 1px solid #003b00; display: flex; flex-direction: column; transition: 0.3s; }
+        .new-chat-btn { margin: 20px; padding: 15px; border-radius: 50px; border: 1px solid #00ff41; background: transparent; color: #00ff41; cursor: pointer; text-align: center; transition: 0.3s; }
+        .new-chat-btn:hover { background: #00ff41; color: #000; box-shadow: 0 0 15px #00ff41; }
+        
+        .hist-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .hist-item { padding: 10px; margin-bottom: 5px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; font-size: 0.9rem; border: 1px solid transparent; }
+        .hist-item:hover { background: #001a00; border-color: #003300; }
+        .hist-item.active { background: #002200; border-color: #00ff41; }
+        
+        /* Main Chat */
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .top-bar { padding: 15px; border-bottom: 1px solid #003b00; display: flex; justify-content: flex-end; gap: 20px; background: #0d0208; }
+        .icon { cursor: pointer; font-size: 1.5rem; opacity: 0.7; transition: 0.2s; }
+        .icon:hover { opacity: 1; transform: scale(1.1); text-shadow: 0 0 5px #00ff41; }
+        
+        .chat-log { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
+        .msg { max-width: 85%; padding: 15px; border-radius: 10px; line-height: 1.6; word-wrap: break-word; }
+        .msg.user { align-self: flex-end; background: #002200; border: 1px solid #004400; color: #fff; }
+        .msg.ai { align-self: flex-start; border-left: 3px solid #00ff41; background: #000; }
+        .msg.err { color: red; border: 1px solid red; align-self: center; }
 
-<!-- Highlight.js -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai-sublime.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+        /* Input Area */
+        .input-zone { padding: 20px; background: linear-gradient(to top, #0d0208 90%, transparent); display: flex; justify-content: center; }
+        .input-wrap { width: 80%; max-width: 800px; background: #001100; border: 1px solid #00ff41; border-radius: 25px; padding: 10px 20px; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0, 255, 65, 0.1); }
+        textarea { background: transparent; border: none; color: #fff; resize: none; outline: none; font-family: inherit; font-size: 1rem; max-height: 200px; }
+        
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid #003300; padding-top: 10px; }
+        select { background: #000; color: #00ff41; border: 1px solid #003b00; padding: 5px; border-radius: 5px; outline: none; }
+        .send-circle { width: 40px; height: 40px; border-radius: 50%; background: #00ff41; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; transition: 0.2s; }
+        .send-circle:hover { box-shadow: 0 0 15px #00ff41; transform: scale(1.1); }
 
-<!-- Marked.js -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-<style>
-/* ===== 基本全局 ===== */
-body { margin: 0; font-family: 'Courier New', monospace; display: flex; height: 100vh; overflow: hidden; background-color: #0d0208; color: #00ff41; }
-button, select { font-family: inherit; }
-
-/* ===== 側欄 ===== */
-.sidebar { width: 260px; background: #020a02; border-right: 1px solid #003b00; display: flex; flex-direction: column; transition: 0.3s; }
-.new-chat-btn { margin: 20px; padding: 15px; border-radius: 50px; border: 1px solid #00ff41; background: transparent; color: #00ff41; cursor: pointer; text-align: center; transition: 0.3s; }
-.new-chat-btn:hover { background: #00ff41; color: #000; box-shadow: 0 0 15px #00ff41; }
-.hist-list { flex: 1; overflow-y: auto; padding: 10px; }
-.hist-item { padding: 10px; margin-bottom: 5px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; font-size: 0.9rem; border: 1px solid transparent; }
-.hist-item:hover { background: #001a00; border-color: #003300; }
-.hist-item.active { background: #002200; border-color: #00ff41; }
-
-/* ===== 主體區 ===== */
-.main { flex: 1; display: flex; flex-direction: column; position: relative; }
-.top-bar { padding: 15px; border-bottom: 1px solid #003b00; display: flex; justify-content: flex-end; gap: 20px; background: #0d0208; }
-.icon { cursor: pointer; font-size: 1.5rem; opacity: 0.7; transition: 0.2s; }
-.icon:hover { opacity: 1; transform: scale(1.1); text-shadow: 0 0 5px #00ff41; }
-.chat-log { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
-.msg { max-width: 85%; padding: 15px; border-radius: 10px; line-height: 1.6; word-wrap: break-word; }
-.msg.user { align-self: flex-end; background: #002200; border: 1px solid #004400; color: #fff; }
-.msg.ai { align-self: flex-start; border-left: 3px solid #00ff41; background: #000; }
-.msg.err { color: red; border: 1px solid red; align-self: center; }
-
-/* ===== 輸入區 ===== */
-.input-zone { padding: 20px; background: linear-gradient(to top, #0d0208 90%, transparent); display: flex; justify-content: center; }
-.input-wrap { width: 80%; max-width: 800px; background: #001100; border: 1px solid #00ff41; border-radius: 25px; padding: 10px 20px; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0, 255, 65, 0.1); }
-textarea { background: transparent; border: none; color: #fff; resize: none; outline: none; font-family: inherit; font-size: 1rem; max-height: 200px; }
-.controls { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid #003300; padding-top: 10px; }
-select { background: #000; color: #00ff41; border: 1px solid #003b00; padding: 5px; border-radius: 5px; outline: none; }
-.send-circle { width: 40px; height: 40px; border-radius: 50%; background: #00ff41; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; transition: 0.2s; }
-.send-circle:hover { box-shadow: 0 0 15px #00ff41; transform: scale(1.1); }
-
-/* ===== Modal ===== */
-.modal-ov { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:100; }
-.modal-in { background: #000; border: 1px solid #00ff41; padding: 20px; width: 300px; text-align: center; }
-.m-btn { margin: 5px; padding: 5px 15px; background: 0; border: 1px solid #00ff41; color: #00ff41; cursor: pointer; }
-.m-btn:hover { background: #00ff41; color: #000; }
-
-/* ===== Hacker code block ===== */
-.hack-code-wrap { border: 1px solid #00ff41; background: #000; margin: 10px 0; border-radius: 8px; box-shadow: 0 0 8px rgba(0,255,65,0.2); overflow: hidden; position: relative; font-family: 'Courier New', monospace; color: #00ff41; }
-.hack-code-top { background: #002200; border-bottom: 2px solid #00ff41; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: bold; color: #00ff41; }
-.hack-code-copy { cursor: pointer; user-select: none; font-size: 1rem; opacity: 0.8; }
-
-/* ===== 主題切換 ===== */
-body.light { background-color: #f4f4f4; color: #003300; }
-body.light .msg.user { background: #d0ffd0; color: #000; border-color:#66bb66; }
-body.light .msg.ai { background: #eee; border-left-color: #339933; }
-body.light .input-wrap { background:#e0ffe0; border-color:#66bb66; color:#003300; }
-body.light .sidebar { background:#d0ffd0; border-right-color:#66bb66; color:#003300; }
-</style>
+        /* Modal */
+        .modal-ov { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:100; }
+        .modal-in { background: #000; border: 1px solid #00ff41; padding: 20px; width: 300px; text-align: center; }
+        .m-btn { margin: 5px; padding: 5px 15px; background: 0; border: 1px solid #00ff41; color: #00ff41; cursor: pointer; }
+        .m-btn:hover { background: #00ff41; color: #000; }
+    </style>
 </head>
-
 <body>
+
 <div class="sidebar">
     <button class="new-chat-btn" onclick="location.href='/chat'">+ CREATE CONVERSATION</button>
     <div class="hist-list" id="histList"></div>
@@ -78,17 +60,14 @@ body.light .sidebar { background:#d0ffd0; border-right-color:#66bb66; color:#003
         <div class="icon" title="Account" onclick="location.href='/account'">👤</div>
         <div class="icon" title="Rename" onclick="askRename()">✏️</div>
         <div class="icon" title="Delete" onclick="askDelete()">🗑️</div>
-        <div class="icon" title="Toggle Theme" onclick="toggleTheme()">🌗</div>
     </div>
-
     <div class="chat-log" id="chatLog"></div>
-
     <div class="input-zone">
         <div class="input-wrap">
             <textarea id="txtIn" rows="1" placeholder="Enter command..." oninput="this.style.height='';this.style.height=this.scrollHeight+'px'"></textarea>
             <div class="controls">
                 <select id="modelSel">
-                    <option value="gpt-oss:120b" selected>GPT oss (Ollama)</option>
+                    <option value="gpt-oss:120b">GPT oss (Ollama)</option>
                     <option value="qwen3-coder:480b">Qwen3 Coder (Ollama)</option>
                     <option value="deepseek-v3.1:671b">DeepSeek V3 (Ollama)</option>
                     <option value="kimi-k2:1t">Kimi k2 (Ollama)</option>
@@ -117,157 +96,155 @@ body.light .sidebar { background:#d0ffd0; border-right-color:#66bb66; color:#003
 </div>
 
 <script>
-/* ===== 全局變數 ===== */
-let chatId = null;
-let historyBuffer = [];
+    let chatId = null;
+    let historyBuffer = [];
 
-/* ===== Markdown Renderer ===== */
-const renderer = new marked.Renderer();
-renderer.code = function(code, lang){
-    code = code || '';
-    const escaped = code.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    const id = "copy_"+Math.random().toString(36).slice(2);
-    return `
-    <div class="hack-code-wrap">
-        <div class="hack-code-top">
-            <span>${lang||'Code'}</span>
-            <span style="color:#55ff99;">Length: ${code.length}</span>
-            <span class="hack-code-copy" id="${id}" onclick="navigator.clipboard.writeText(\`${code.replace(/`/g,'\\`')}\'); this.innerText='✔'; setTimeout(()=>this.innerText='📋',900)">📋</span>
-        </div>
-        <pre><code>${escaped}</code></pre>
-    </div>`;
-};
-marked.setOptions({renderer});
+    async function init() {
+        const parts = location.pathname.split('/');
+        if(parts[2]) await loadChat(parts[2]);
+        loadSidebar();
+    }
 
-/* ===== 初始化 ===== */
-async function init(){
-    const parts = location.pathname.split('/');
-    if(parts[2]) await loadChat(parts[2]);
-    loadSidebar();
-}
-async function loadSidebar(){
-    const res = await fetch('/api/chat/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
-    const data = await res.json();
-    const list = document.getElementById('histList');
-    list.innerHTML = '';
-    data.list.forEach(item=>{
+    async function loadSidebar() {
+        const res = await fetch('/api/chat/load', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
+        const data = await res.json();
+        const list = document.getElementById('histList');
+        list.innerHTML = '';
+        data.list.forEach(item => {
+            const div = document.createElement('div');
+            div.className = `hist-item ${item.id === chatId ? 'active' : ''}`;
+            div.innerHTML = `<span>${item.title}</span>`;
+            div.onclick = () => location.href = `/chat/${item.id}`;
+            list.appendChild(div);
+        });
+    }
+
+    async function loadChat(id) {
+        const res = await fetch('/api/chat/load', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({chatId: id})});
+        const data = await res.json();
+        if(data.chat) {
+            chatId = id;
+            historyBuffer = data.chat.messages;
+            const log = document.getElementById('chatLog');
+            log.innerHTML = '';
+            data.chat.messages.forEach(m => addBubble(m.role, m.content, false));
+            log.scrollTop = log.scrollHeight;
+        }
+    }
+
+    function addBubble(role, text, animate) {
+        const log = document.getElementById('chatLog');
         const div = document.createElement('div');
-        div.className = `hist-item ${item.id===chatId?'active':''}`;
-        div.innerHTML = `<span>${item.title}</span>`;
-        div.onclick=()=>location.href=`/chat/${item.id}`;
-        list.appendChild(div);
-    });
-}
-async function loadChat(id){
-    const res = await fetch('/api/chat/load',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatId:id})});
-    const data = await res.json();
-    if(data.chat){
-        chatId=id;
-        historyBuffer=data.chat.messages;
-        const log=document.getElementById('chatLog');
-        log.innerHTML='';
-        data.chat.messages.forEach(m=>addBubble(m.role,m.content,false));
+        div.className = `msg ${role}`;
+        
+        if(role === 'ai' && animate) {
+            let i = 0;
+            div.innerHTML = "ZELFA> ";
+            log.appendChild(div);
+            const interval = setInterval(() => {
+                div.textContent += text.charAt(i);
+                i++;
+                log.scrollTop = log.scrollHeight;
+                if(i >= text.length) {
+                    clearInterval(interval);
+                    div.innerHTML = marked.parse(text);
+                }
+            }, 1);
+        } else {
+            div.innerHTML = role === 'ai' ? marked.parse(text) : text.replace(/\n/g, '<br>');
+            log.appendChild(div);
+        }
         log.scrollTop = log.scrollHeight;
     }
-}
 
-/* ===== 新增氣泡，AI逐字動畫 ===== */
-function addBubble(role,text,animate){
-    const log=document.getElementById('chatLog');
-    const div=document.createElement('div');
-    div.className=`msg ${role}`;
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
+    async function sendMsg() {
+        const txt = document.getElementById('txtIn');
+        const val = txt.value.trim();
+        if(!val) return;
+        
+        txt.value = '';
+        addBubble('user', val);
+        historyBuffer.push({role:'user', content:val});
 
-    if(role==='ai' && animate){
-        let i=0;
-        const interval = setInterval(()=>{
-            div.textContent = "ZELFA> " + text.slice(0,i);
-            i++;
-            log.scrollTop = log.scrollHeight;
-            if(i > text.length){
-                clearInterval(interval);
-                div.innerHTML = marked.parse(text);
-                document.querySelectorAll('pre code').forEach(block=>hljs.highlightElement(block));
+        // Loading indicator
+        const loadDiv = document.createElement('div');
+        loadDiv.className = 'msg ai';
+        loadDiv.textContent = '...CALCULATING...';
+        document.getElementById('chatLog').appendChild(loadDiv);
+
+        try {
+            const res = await fetch('/api/models', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    model: document.getElementById('modelSel').value,
+                    prompt: val,
+                    chatId: chatId,
+                    messages: historyBuffer.slice(-4)
+                })
+            });
+            
+            loadDiv.remove();
+            
+            if(res.status === 429) {
+                addBubble('err', 'DAILY QUOTA EXCEEDED');
+                return;
             }
-        }, 15);
-    } else {
-        div.innerHTML = role==='ai'?marked.parse(text):text.replace(/\n/g,'<br>');
-        if(role==='ai') document.querySelectorAll('pre code').forEach(block=>hljs.highlightElement(block));
-    }
-}
+            
+            const data = await res.json();
+            if(data.error) throw new Error(data.error);
 
-/* ===== 傳送訊息 ===== */
-async function sendMsg(){
-    const txt=document.getElementById('txtIn');
-    const val=txt.value.trim();
-    if(!val) return;
-    txt.value='';
-    addBubble('user',val);
-    historyBuffer.push({role:'user',content:val});
-    const loadDiv=document.createElement('div');
-    loadDiv.className='msg ai';
-    loadDiv.textContent='...CALCULATING...';
-    document.getElementById('chatLog').appendChild(loadDiv);
-    try{
-        const res=await fetch('/api/models',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-                model: document.getElementById('modelSel').value,
-                prompt: val,
-                chatId: chatId,
-                messages: historyBuffer.slice(-4)
-            })
-        });
-        loadDiv.remove();
-        if(res.status===429){ addBubble('err','DAILY QUOTA EXCEEDED'); return; }
-        const data=await res.json();
-        if(data.error) throw new Error(data.error);
-        if(!chatId){ chatId=data.chatId; history.pushState({},'',`/chat/${chatId}`); loadSidebar(); }
-        historyBuffer.push({role:'ai',content:data.reply});
-        addBubble('ai',data.reply,true);
-    }catch(e){
-        loadDiv.remove();
-        addBubble('err','ERROR: '+e.message);
-    }
-}
+            if(!chatId) {
+                chatId = data.chatId;
+                history.pushState({}, '', `/chat/${chatId}`);
+                loadSidebar();
+            }
 
-document.getElementById('txtIn').addEventListener('keydown',e=>{
-    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); }
-});
+            historyBuffer.push({role:'ai', content: data.reply});
+            addBubble('ai', data.reply, true);
 
-/* ===== Modal ===== */
-function showM(txt,useInput,cb){
-    const m=document.getElementById('modal');
-    const inp=document.getElementById('mInput');
-    document.getElementById('mText').innerText=txt;
-    inp.style.display=useInput?'block':'none';
-    inp.value='';
-    m.style.display='flex';
-    document.getElementById('mYes').onclick=()=>{ cb(useInput?inp.value:true); m.style.display='none'; };
-}
-function askRename(){
-    if(!chatId) return;
-    showM("NEW TITLE:",true,async(val)=>{
-        if(val){
-            await fetch('/api/chat/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'rename',chatId,newTitle:val})});
-            loadSidebar();
+        } catch(e) {
+            loadDiv.remove();
+            addBubble('err', 'ERROR: ' + e.message);
         }
-    });
-}
-function askDelete(){
-    if(!chatId) return;
-    showM("DELETE CHAT PERMANENTLY?",false,async()=>{
-        await fetch('/api/chat/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',chatId})});
-        location.href='/chat';
-    });
-}
+    }
 
-/* ===== 主題切換 ===== */
-function toggleTheme(){ document.body.classList.toggle('light'); }
+    document.getElementById('txtIn').addEventListener('keydown', e => {
+        if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+    });
 
-init();
+    // Modal Logic
+    function showM(txt, useInput, cb) {
+        const m = document.getElementById('modal');
+        const inp = document.getElementById('mInput');
+        document.getElementById('mText').innerText = txt;
+        inp.style.display = useInput ? 'block' : 'none';
+        inp.value = '';
+        m.style.display = 'flex';
+        document.getElementById('mYes').onclick = () => {
+            cb(useInput ? inp.value : true);
+            m.style.display = 'none';
+        };
+    }
+
+    function askRename() {
+        if(!chatId) return;
+        showM("NEW TITLE:", true, async (val) => {
+            if(val) {
+                await fetch('/api/chat/action', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'rename', chatId, newTitle: val})});
+                loadSidebar();
+            }
+        });
+    }
+
+    function askDelete() {
+        if(!chatId) return;
+        showM("DELETE CHAT PERMANENTLY?", false, async () => {
+            await fetch('/api/chat/action', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'delete', chatId})});
+            location.href = '/chat';
+        });
+    }
+
+    init();
 </script>
 </body>
 </html>
