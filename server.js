@@ -40,7 +40,11 @@ const MODEL_REGISTRY = {
     'gpt-oss:120b': { provider: 'Ollama' },
     'gemini-2.0-flash': { provider: 'Google' },
     'gpt-5-nano': { provider: 'OpenAI' },
-    'o3-mini': { provider: 'OpenAI' },
+    'gpt-4.1-nano': { provider: 'OpenAI' },
+    'gpt-4o-mini': { provider: 'OpenAI' },
+    'gpt-3.5-turbo': { provider: 'OpenAI' },
+    'pt-4.1-mini': { provider: 'OpenAI' },
+    'gpt-5-mini': { provider: 'OpenAI' },
     'gpt-5.1-codex-mini': { provider: 'OpenAI' }
 };
 
