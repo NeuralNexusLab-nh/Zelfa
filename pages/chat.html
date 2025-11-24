@@ -271,7 +271,7 @@ body.light .sidebar { background:#d0ffd0; border-right-color:#66bb66; color:#003
             <textarea id="txtIn" rows="1" placeholder="Enter command..." oninput="this.style.height='';this.style.height=this.scrollHeight+'px'"></textarea>
             <div class="controls">
                 <select id="modelSel">
-                    <option value="gpt-oss:120b">GPT oss (Ollama)</option>
+                    <option value="gpt-oss:120b" selected>GPT oss (Ollama)</option>
                     <option value="qwen3-coder:480b">Qwen3 Coder (Ollama)</option>
                     <option value="deepseek-v3.1:671b">DeepSeek V3 (Ollama)</option>
                     <option value="kimi-k2:1t">Kimi k2 (Ollama)</option>
@@ -284,7 +284,7 @@ body.light .sidebar { background:#d0ffd0; border-right-color:#66bb66; color:#003
                     <option value="gpt-4o-mini">GPT-4o Mini (OpenAI)</option>
                     <option value="gpt-3.5-turbo">GPT-3.5 Turbo (OpenAI)</option>
                     <option value="gpt-4.1-mini">GPT-4.1 Mini [VIP] (OpenAI)</option>
-                    <option value="gpt-5-mini" selected>GPT-5 Mini [VIP] (OpenAI)</option>
+                    <option value="gpt-5-mini">GPT-5 Mini [VIP] (OpenAI)</option>
                     <option value="gpt-5.1-codex-mini">GPT-5.1 Codex Mini [VIP] (OpenAI)</option>
                 </select>
                 <button class="send-circle" onclick="sendMsg()">↑</button>
