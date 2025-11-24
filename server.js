@@ -40,11 +40,7 @@ const MODEL_REGISTRY = {
     'gpt-oss:120b': { provider: 'Ollama' },
     'gemini-2.0-flash': { provider: 'Google' },
     'gpt-5-nano': { provider: 'OpenAI' },
-    'gpt-4.1-nano': { provider: 'OpenAI' },
-    'gpt-4o-mini': { provider: 'OpenAI' },
-    'gpt-3.5-turbo': { provider: 'OpenAI' },
-    'pt-4.1-mini': { provider: 'OpenAI' },
-    'gpt-5-mini': { provider: 'OpenAI' },
+    'o3-mini': { provider: 'OpenAI' },
     'gpt-5.1-codex-mini': { provider: 'OpenAI' }
 };
 
@@ -283,22 +279,13 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
                 ...adminOllamaLimits,
                 "gemini-2.0-flash": 10000,
                 "gpt-5-nano": 10000,
-                "gpt-4.1-nano": 10000,
-                "gpt-4o-mini": 10000,
-                "gpt-3.5-turbo": 10000,
-                "gpt-4.1-mini": 10000,
-                "gpt-5-mini": 10000,
+                "o3-mini": 10000,
                 "gpt-5.1-codex-mini": 10000
             } : {
                 ...defaultOllamaLimits,
                 "gemini-2.0-flash": 50,
-                "gpt-5-nano": 3,
-                "gpt-4.1-nano": 3,
-                "gpt-4o-mini": 3,
-                "gpt-3.5-turbo": 1,
-                "gpt-4.1-mini": 0,
-                "gpt-5-mini": 0,
-                "gpt-5.1-codex-mini": 0
+                "o3-mini": 0,
+                "gpt-5.1-codex-mini": 1
             },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
         };
