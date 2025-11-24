@@ -301,9 +301,11 @@ body.light .sidebar { background:#d0ffd0; border-right-color:#66bb66; color:#003
 
 <script>
 /* ===== Markdown + Hacker Code Block Renderer ===== */
-const renderer = new marked.Renderer();
 renderer.code = function(code, lang){
-    const escaped = code.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    code = code || '';  // ensure code is a string
+    const escaped = code.replace(/&/g,"&amp;")
+                        .replace(/</g,"&lt;")
+                        .replace(/>/g,"&gt;");
     const id = "copy_"+Math.random().toString(36).slice(2);
 
     return `
@@ -317,6 +319,7 @@ renderer.code = function(code, lang){
     </div>
     `;
 };
+
 marked.setOptions({renderer});
 
 /* ===== 全局變數 ===== */
