@@ -284,8 +284,9 @@ app.post('/api/admin/users', requireAdminAuth, async (req, res) => {
             } : {
                 ...defaultOllamaLimits,
                 "gemini-2.0-flash": 50,
+                "gpt-5-nano": 3,
                 "o3-mini": 0,
-                "gpt-5.1-codex-mini": 1
+                "gpt-5.1-codex-mini": 0
             },
             usage: { date: new Date().toISOString().split('T')[0], counts: {} }
         };
