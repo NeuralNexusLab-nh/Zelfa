@@ -32,7 +32,7 @@
         .chat-log { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
         .msg { max-width: 85%; padding: 15px; border-radius: 10px; line-height: 1.6; word-wrap: break-word; }
         
-        /* User Message: White text, Green background context, NO Markdown/HTML parsing visually */
+        /* User Message: White text, Green background context */
         .msg.user { align-self: flex-end; background: #002200; border: 1px solid #004400; color: #fff; white-space: pre-wrap; font-family: inherit; }
         
         /* AI Message: Black bg, Green text */
@@ -175,15 +175,28 @@
     let chatId = null;
     let historyBuffer = [];
 
-    // --- 1. Custom Marked Renderer for Hacker Code Blocks ---
+    // --- 1. Custom Marked Renderer (Fixed for Marked v12+) ---
     const renderer = new marked.Renderer();
-    renderer.code = function(code, language) {
-        // Ensure inputs are strings
-        const safeCode = String(code || "");
-        const validLang = hljs.getLanguage(language) ? language : 'plaintext';
+    renderer.code = function(tokenObj) {
+        // [FIX] Handle new Marked API where arguments are an object ({text, lang...})
+        // instead of separate arguments (code, lang).
         
-        const highlighted = hljs.highlight(safeCode, { language: validLang }).value;
-        const len = safeCode.length;
+        let codeText = "";
+        let lang = "";
+
+        if (typeof tokenObj === 'object' && tokenObj !== null && tokenObj.text !== undefined) {
+            // New Marked Version
+            codeText = tokenObj.text;
+            lang = tokenObj.lang || 'plaintext';
+        } else {
+            // Fallback for older versions or if structure is different
+            codeText = String(tokenObj || "");
+            lang = (arguments[1]) || 'plaintext';
+        }
+
+        const validLang = hljs.getLanguage(lang) ? lang : 'plaintext';
+        const highlighted = hljs.highlight(codeText, { language: validLang }).value;
+        const len = codeText.length;
         
         return `
         <div class="hacker-code-box">
@@ -207,6 +220,7 @@
         const text = codeEl.textContent;
 
         navigator.clipboard.writeText(text).then(() => {
+            const original = btn.innerHTML;
             btn.innerHTML = '✔';
             btn.style.color = '#00ff41';
             btn.style.textShadow = '0 0 10px #00ff41';
@@ -268,9 +282,8 @@
         } catch(e) { console.error("Chat load failed", e); }
     }
 
-    // --- 3. Modified Bubble Logic with Safety Checks ---
+    // --- 3. Modified Bubble Logic ---
     function addBubble(role, text, animate) {
-        // SAFETY: Force text to be a string. Fixes 'e.replace is not a function'.
         const safeText = String(text || "");
         
         const log = document.getElementById('chatLog');
@@ -289,7 +302,7 @@
                 
                 const typeStep = () => {
                     if(remainingText.length === 0) {
-                        div.innerHTML = marked.parse(safeText); // Final render
+                        div.innerHTML = marked.parse(safeText);
                         log.scrollTop = log.scrollHeight;
                         return;
                     }
@@ -299,7 +312,7 @@
                     remainingText = remainingText.substring(chunkSize);
                     currentText += chunk;
 
-                    // marked.parse expects string. currentText is always string.
+                    // Pass pure string to marked
                     div.innerHTML = marked.parse(currentText) + "<span style='opacity:0.5'>_</span>";
                     log.scrollTop = log.scrollHeight;
 
@@ -360,7 +373,6 @@
                 loadSidebar();
             }
 
-            // SAFETY: Ensure reply is valid string
             const reply = data.reply || ""; 
 
             historyBuffer.push({role:'ai', content: reply});
