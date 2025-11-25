@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Zelfa | Chat</title>
+    <!-- Marked for Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js for Code Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark-reasonable.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
     <style>
         /* Full Screen Hacker UI */
         body { margin: 0; background: #0d0208; color: #00ff41; font-family: 'Courier New', monospace; display: flex; height: 100vh; overflow: hidden; }
@@ -26,9 +31,80 @@
         
         .chat-log { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
         .msg { max-width: 85%; padding: 15px; border-radius: 10px; line-height: 1.6; word-wrap: break-word; }
-        .msg.user { align-self: flex-end; background: #002200; border: 1px solid #004400; color: #fff; }
-        .msg.ai { align-self: flex-start; border-left: 3px solid #00ff41; background: #000; }
+        
+        /* User Message: White text, Green background context, NO Markdown/HTML parsing visually */
+        .msg.user { align-self: flex-end; background: #002200; border: 1px solid #004400; color: #fff; white-space: pre-wrap; font-family: inherit; }
+        
+        /* AI Message: Black bg, Green text */
+        .msg.ai { align-self: flex-start; border-left: 3px solid #00ff41; background: #000; color: #00ff41; }
         .msg.err { color: red; border: 1px solid red; align-self: center; }
+
+        /* Hacker Style Code Blocks */
+        .hacker-code-box {
+            margin: 15px 0;
+            border: 1px solid #00ff41;
+            background: #050505;
+            position: relative;
+        }
+
+        .hacker-code-header {
+            background: #003b00;
+            border-bottom: 3px solid #00ff41; /* Thick top border for content */
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .hacker-code-header .lbl {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hacker-code-header .right-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .hacker-code-header .len {
+            color: #88ffaa;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #00ff41;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: 0.2s;
+            opacity: 0.8;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .copy-btn:hover {
+            opacity: 1;
+            text-shadow: 0 0 8px #00ff41;
+            transform: scale(1.1);
+        }
+
+        /* Override highlight.js background to blend with hacker theme */
+        .hacker-code-box pre { margin: 0; padding: 10px; overflow-x: auto; }
+        .hacker-code-box code { font-family: 'Courier New', monospace; background: transparent !important; padding: 0; }
+
+        /* Highlight Colors */
+        .hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-link { color: #ff79c6; }
+        .hljs-function .hljs-keyword { color: #ff79c6; }
+        .hljs-string, .hljs-title, .hljs-name, .hljs-type, .hljs-attribute, .hljs-symbol, .hljs-bullet, .hljs-addition, .hljs-variable, .hljs-template-tag, .hljs-template-variable { color: #f1fa8c; }
+        .hljs-comment, .hljs-quote, .hljs-meta { color: #6272a4; }
+        .hljs-keyword, .hljs-strong { font-weight: bold; }
 
         /* Input Area */
         .input-zone { padding: 20px; background: linear-gradient(to top, #0d0208 90%, transparent); display: flex; justify-content: center; }
@@ -99,6 +175,61 @@
     let chatId = null;
     let historyBuffer = [];
 
+    // --- 1. Custom Marked Renderer for Hacker Code Blocks ---
+    const renderer = new marked.Renderer();
+    renderer.code = function(code, language) {
+        const validLang = hljs.getLanguage(language) ? language : 'plaintext';
+        const highlighted = hljs.highlight(code, { language: validLang }).value;
+        const len = code.length;
+        
+        return `
+        <div class="hacker-code-box">
+            <div class="hacker-code-header">
+                <span class="lbl">Code</span>
+                <div class="right-controls">
+                    <span class="len">Length: ${len}</span>
+                    <button class="copy-btn" onclick="copyCode(this)" title="Copy Code">❐</button>
+                </div>
+            </div>
+            <pre><code class="hljs ${validLang}">${highlighted}</code></pre>
+        </div>
+        `;
+    };
+    marked.setOptions({ renderer: renderer });
+
+    // --- Copy Functionality ---
+    function copyCode(btn) {
+        // Traverse DOM: btn -> right-controls -> hacker-code-header -> hacker-code-box -> pre -> code
+        const box = btn.closest('.hacker-code-box');
+        const codeEl = box.querySelector('code');
+        
+        // Get raw text (innerText usually preserves line breaks correctly for pre/code)
+        const text = codeEl.textContent;
+
+        navigator.clipboard.writeText(text).then(() => {
+            // Success animation
+            const original = btn.innerHTML;
+            btn.innerHTML = '✔'; // Checkmark
+            btn.style.color = '#00ff41'; // Ensure bright green
+            btn.style.textShadow = '0 0 10px #00ff41';
+            
+            setTimeout(() => {
+                btn.innerHTML = '❐'; // Revert to icon
+                btn.style.color = '';
+                btn.style.textShadow = '';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            btn.innerHTML = '❌';
+        });
+    }
+
+    // --- 2. Helper to Escape HTML ---
+    function escapeHtml(text) {
+        if (!text) return text;
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
     async function init() {
         const parts = location.pathname.split('/');
         if(parts[2]) await loadChat(parts[2]);
@@ -106,53 +237,81 @@
     }
 
     async function loadSidebar() {
-        const res = await fetch('/api/chat/load', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
-        const data = await res.json();
-        const list = document.getElementById('histList');
-        list.innerHTML = '';
-        data.list.forEach(item => {
-            const div = document.createElement('div');
-            div.className = `hist-item ${item.id === chatId ? 'active' : ''}`;
-            div.innerHTML = `<span>${item.title}</span>`;
-            div.onclick = () => location.href = `/chat/${item.id}`;
-            list.appendChild(div);
-        });
+        try {
+            const res = await fetch('/api/chat/load', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
+            const data = await res.json();
+            const list = document.getElementById('histList');
+            list.innerHTML = '';
+            if(data.list) {
+                data.list.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = `hist-item ${item.id === chatId ? 'active' : ''}`;
+                    div.innerHTML = `<span>${escapeHtml(item.title)}</span>`;
+                    div.onclick = () => location.href = `/chat/${item.id}`;
+                    list.appendChild(div);
+                });
+            }
+        } catch(e) { console.error("Sidebar load failed", e); }
     }
 
     async function loadChat(id) {
-        const res = await fetch('/api/chat/load', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({chatId: id})});
-        const data = await res.json();
-        if(data.chat) {
-            chatId = id;
-            historyBuffer = data.chat.messages;
-            const log = document.getElementById('chatLog');
-            log.innerHTML = '';
-            data.chat.messages.forEach(m => addBubble(m.role, m.content, false));
-            log.scrollTop = log.scrollHeight;
-        }
+        try {
+            const res = await fetch('/api/chat/load', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({chatId: id})});
+            const data = await res.json();
+            if(data.chat) {
+                chatId = id;
+                historyBuffer = data.chat.messages;
+                const log = document.getElementById('chatLog');
+                log.innerHTML = '';
+                data.chat.messages.forEach(m => addBubble(m.role, m.content, false));
+                log.scrollTop = log.scrollHeight;
+            }
+        } catch(e) { console.error("Chat load failed", e); }
     }
 
+    // --- 3. Modified Bubble Logic with Typing Effect ---
     function addBubble(role, text, animate) {
         const log = document.getElementById('chatLog');
         const div = document.createElement('div');
         div.className = `msg ${role}`;
         
-        if(role === 'ai' && animate) {
-            let i = 0;
-            div.innerHTML = "ZELFA> ";
-            log.appendChild(div);
-            const interval = setInterval(() => {
-                div.textContent += text.charAt(i);
-                i++;
-                log.scrollTop = log.scrollHeight;
-                if(i >= text.length) {
-                    clearInterval(interval);
-                    div.innerHTML = marked.parse(text);
-                }
-            }, 1);
+        log.appendChild(div);
+
+        if(role === 'user') {
+            // User: Text only, preserve formatting, NO markdown
+            div.textContent = text;
+        } else if(role === 'ai') {
+            if(animate) {
+                div.innerHTML = "<span style='color:#0f0'>ZELFA></span> _"; 
+                let currentText = "";
+                let remainingText = text;
+                
+                const typeStep = () => {
+                    if(remainingText.length === 0) {
+                        div.innerHTML = marked.parse(text); 
+                        log.scrollTop = log.scrollHeight;
+                        return;
+                    }
+                    // Chunk Size: 20-40 chars
+                    const chunkSize = Math.floor(Math.random() * (40 - 20 + 1) + 20);
+                    const chunk = remainingText.substring(0, chunkSize);
+                    remainingText = remainingText.substring(chunkSize);
+                    currentText += chunk;
+
+                    // Render partial Markdown
+                    div.innerHTML = marked.parse(currentText) + "<span style='opacity:0.5'>_</span>";
+                    log.scrollTop = log.scrollHeight;
+
+                    // Delay: 10-30ms
+                    const delay = Math.floor(Math.random() * (30 - 10 + 1) + 10);
+                    setTimeout(typeStep, delay);
+                };
+                typeStep();
+            } else {
+                div.innerHTML = marked.parse(text);
+            }
         } else {
-            div.innerHTML = role === 'ai' ? marked.parse(text) : text.replace(/\n/g, '<br>');
-            log.appendChild(div);
+            div.textContent = text;
         }
         log.scrollTop = log.scrollHeight;
     }
@@ -163,14 +322,16 @@
         if(!val) return;
         
         txt.value = '';
-        addBubble('user', val);
+        txt.style.height = 'auto'; 
+        
+        addBubble('user', val, false);
         historyBuffer.push({role:'user', content:val});
 
-        // Loading indicator
         const loadDiv = document.createElement('div');
         loadDiv.className = 'msg ai';
         loadDiv.textContent = '...CALCULATING...';
         document.getElementById('chatLog').appendChild(loadDiv);
+        document.getElementById('chatLog').scrollTop = document.getElementById('chatLog').scrollHeight;
 
         try {
             const res = await fetch('/api/models', {
@@ -186,14 +347,14 @@
             loadDiv.remove();
             
             if(res.status === 429) {
-                addBubble('err', 'DAILY QUOTA EXCEEDED');
+                addBubble('err', 'DAILY QUOTA EXCEEDED', false);
                 return;
             }
             
             const data = await res.json();
             if(data.error) throw new Error(data.error);
 
-            if(!chatId) {
+            if(!chatId && data.chatId) {
                 chatId = data.chatId;
                 history.pushState({}, '', `/chat/${chatId}`);
                 loadSidebar();
@@ -204,7 +365,7 @@
 
         } catch(e) {
             loadDiv.remove();
-            addBubble('err', 'ERROR: ' + e.message);
+            addBubble('err', 'ERROR: ' + e.message, false);
         }
     }
 
@@ -220,7 +381,12 @@
         inp.style.display = useInput ? 'block' : 'none';
         inp.value = '';
         m.style.display = 'flex';
-        document.getElementById('mYes').onclick = () => {
+        
+        const yesBtn = document.getElementById('mYes');
+        const newYesBtn = yesBtn.cloneNode(true);
+        yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+        
+        newYesBtn.onclick = () => {
             cb(useInput ? inp.value : true);
             m.style.display = 'none';
         };
