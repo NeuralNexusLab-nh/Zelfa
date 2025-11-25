@@ -178,9 +178,12 @@
     // --- 1. Custom Marked Renderer for Hacker Code Blocks ---
     const renderer = new marked.Renderer();
     renderer.code = function(code, language) {
+        // Ensure inputs are strings
+        const safeCode = String(code || "");
         const validLang = hljs.getLanguage(language) ? language : 'plaintext';
-        const highlighted = hljs.highlight(code, { language: validLang }).value;
-        const len = code.length;
+        
+        const highlighted = hljs.highlight(safeCode, { language: validLang }).value;
+        const len = safeCode.length;
         
         return `
         <div class="hacker-code-box">
@@ -199,35 +202,31 @@
 
     // --- Copy Functionality ---
     function copyCode(btn) {
-        // Traverse DOM: btn -> right-controls -> hacker-code-header -> hacker-code-box -> pre -> code
         const box = btn.closest('.hacker-code-box');
         const codeEl = box.querySelector('code');
-        
-        // Get raw text (innerText usually preserves line breaks correctly for pre/code)
         const text = codeEl.textContent;
 
         navigator.clipboard.writeText(text).then(() => {
-            // Success animation
-            const original = btn.innerHTML;
-            btn.innerHTML = '✔'; // Checkmark
-            btn.style.color = '#00ff41'; // Ensure bright green
+            btn.innerHTML = '✔';
+            btn.style.color = '#00ff41';
             btn.style.textShadow = '0 0 10px #00ff41';
-            
             setTimeout(() => {
-                btn.innerHTML = '❐'; // Revert to icon
+                btn.innerHTML = '❐';
                 btn.style.color = '';
                 btn.style.textShadow = '';
             }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy:', err);
-            btn.innerHTML = '❌';
-        });
+        }).catch(err => console.error('Copy failed:', err));
     }
 
     // --- 2. Helper to Escape HTML ---
     function escapeHtml(text) {
-        if (!text) return text;
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        if (!text) return "";
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     async function init() {
@@ -260,17 +259,20 @@
             const data = await res.json();
             if(data.chat) {
                 chatId = id;
-                historyBuffer = data.chat.messages;
+                historyBuffer = data.chat.messages || [];
                 const log = document.getElementById('chatLog');
                 log.innerHTML = '';
-                data.chat.messages.forEach(m => addBubble(m.role, m.content, false));
+                historyBuffer.forEach(m => addBubble(m.role, m.content, false));
                 log.scrollTop = log.scrollHeight;
             }
         } catch(e) { console.error("Chat load failed", e); }
     }
 
-    // --- 3. Modified Bubble Logic with Typing Effect ---
+    // --- 3. Modified Bubble Logic with Safety Checks ---
     function addBubble(role, text, animate) {
+        // SAFETY: Force text to be a string. Fixes 'e.replace is not a function'.
+        const safeText = String(text || "");
+        
         const log = document.getElementById('chatLog');
         const div = document.createElement('div');
         div.className = `msg ${role}`;
@@ -278,40 +280,38 @@
         log.appendChild(div);
 
         if(role === 'user') {
-            // User: Text only, preserve formatting, NO markdown
-            div.textContent = text;
+            div.textContent = safeText;
         } else if(role === 'ai') {
             if(animate) {
                 div.innerHTML = "<span style='color:#0f0'>ZELFA></span> _"; 
                 let currentText = "";
-                let remainingText = text;
+                let remainingText = safeText;
                 
                 const typeStep = () => {
                     if(remainingText.length === 0) {
-                        div.innerHTML = marked.parse(text); 
+                        div.innerHTML = marked.parse(safeText); // Final render
                         log.scrollTop = log.scrollHeight;
                         return;
                     }
-                    // Chunk Size: 20-40 chars
+                    
                     const chunkSize = Math.floor(Math.random() * (40 - 20 + 1) + 20);
                     const chunk = remainingText.substring(0, chunkSize);
                     remainingText = remainingText.substring(chunkSize);
                     currentText += chunk;
 
-                    // Render partial Markdown
+                    // marked.parse expects string. currentText is always string.
                     div.innerHTML = marked.parse(currentText) + "<span style='opacity:0.5'>_</span>";
                     log.scrollTop = log.scrollHeight;
 
-                    // Delay: 10-30ms
                     const delay = Math.floor(Math.random() * (30 - 10 + 1) + 10);
                     setTimeout(typeStep, delay);
                 };
                 typeStep();
             } else {
-                div.innerHTML = marked.parse(text);
+                div.innerHTML = marked.parse(safeText);
             }
         } else {
-            div.textContent = text;
+            div.textContent = safeText;
         }
         log.scrollTop = log.scrollHeight;
     }
@@ -360,8 +360,11 @@
                 loadSidebar();
             }
 
-            historyBuffer.push({role:'ai', content: data.reply});
-            addBubble('ai', data.reply, true);
+            // SAFETY: Ensure reply is valid string
+            const reply = data.reply || ""; 
+
+            historyBuffer.push({role:'ai', content: reply});
+            addBubble('ai', reply, true);
 
         } catch(e) {
             loadDiv.remove();
