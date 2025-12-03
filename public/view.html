@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARCHIVED LOG</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        :root {
+            --bg: #050505;
+            --term-green: #00ff41;
+            --user-cyan: #0ff;
+        }
+        body {
+            background-color: var(--bg);
+            color: #888;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { color: var(--term-green); border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .meta { margin-bottom: 30px; font-size: 0.8rem; }
+        
+        .msg { margin-bottom: 20px; border-left: 2px solid #333; padding-left: 15px; }
+        .role { font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        .role-user { color: var(--user-cyan); }
+        .role-assistant { color: var(--term-green); }
+        .content { color: #ddd; line-height: 1.5; white-space: pre-wrap; }
+
+        /* Markdown tables/code overrides */
+        .content pre { background: #111; padding: 10px; border: 1px solid #333; overflow-x: auto; }
+        .content code { font-family: 'Consolas', monospace; }
+        
+        #new-btn {
+            position: fixed; top: 20px; right: 20px;
+            background: #000; border: 1px solid var(--term-green); color: var(--term-green);
+            padding: 5px 15px; text-decoration: none;
+        }
+        #new-btn:hover { background: var(--term-green); color: #000; }
+    </style>
+</head>
+<body>
+    <a href="/" id="new-btn">ESTABLISH NEW LINK</a>
+    <h1>// SECURE ARCHIVE</h1>
+    <div class="meta" id="meta-info">Retrieving data...</div>
+    <div id="log-container"></div>
+
+    <script>
+        // Setup Marked
+        marked.setOptions({
+            highlight: function(code, lang) {
+                const language = highlight.getLanguage(lang) ? lang : 'plaintext';
+                return highlight.highlight(code, { language }).value;
+            }
+        });
+
+        const chatID = window.location.pathname.split('/').pop();
+
+        async function load() {
+            try {
+                const res = await fetch(`/api/saved/${chatID}`);
+                if (!res.ok) throw new Error("Log Missing");
+                
+                const data = await res.json();
+                
+                document.getElementById('meta-info').innerText = `ID: ${chatID} | MODEL: ${data.model} | TS: ${data.timestamp}`;
+                
+                const container = document.getElementById('log-container');
+                
+                data.history.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'msg';
+                    
+                    const role = document.createElement('div');
+                    role.className = `role role-${msg.role}`;
+                    role.innerText = msg.role === 'user' ? '>> USER' : '>> ZELFA';
+                    
+                    const content = document.createElement('div');
+                    content.className = 'content';
+                    // Parse if AI, plain if User (optional, can parse both)
+                    content.innerHTML = msg.role === 'assistant' ? marked.parse(msg.content) : msg.content;
+                    
+                    div.appendChild(role);
+                    div.appendChild(content);
+                    container.appendChild(div);
+                });
+
+            } catch (e) {
+                document.body.innerHTML = "<h1 style='color:red'>DATA CORRUPTED // 404</h1>";
+            }
+        }
+        load();
+    </script>
+</body>
+</html>
