@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- 加入 viewport 設定以適配手機螢幕 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZELFA // ARCHIVED LOG</title>
+    
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <style>
+        :root {
+            --bg: #050505;
+            --term-green: #00ff41;
+            --term-dim: #008F11;
+            --user-cyan: #0ff;
+            --alert-red: #ff3333;
+            --border: 1px solid #333;
+        }
+        
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: #888;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            min-height: 100vh; /* 唯讀頁面允許滾動，使用 min-height */
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Scanline effect (與首頁一致) */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed; /* Fixed 確保滾動時掃描線不動 */
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 999;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1000;
+        }
+
+        h1 { 
+            color: var(--term-green); 
+            border-bottom: 1px solid #333; 
+            padding-bottom: 15px; 
+            margin-top: 0;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .meta { 
+            margin-bottom: 40px; 
+            font-size: 0.8rem; 
+            color: var(--term-dim);
+            font-weight: bold;
+        }
+        
+        .msg { 
+            margin-bottom: 25px; 
+            padding-left: 15px; 
+            border-left: 2px solid #333; 
+        }
+        
+        .role { 
+            font-weight: bold; 
+            margin-bottom: 8px; 
+            font-size: 0.85rem; 
+            letter-spacing: 1px;
+        }
+        .role-user { color: var(--user-cyan); }
+        .role-assistant { color: var(--term-green); }
+        
+        .content { 
+            color: #ddd; 
+            line-height: 1.6; 
+            word-wrap: break-word;
+        }
+
+        /* Markdown Styles */
+        .content p { margin: 5px 0; }
+        .content strong { color: #fff; }
+        
+        /* Code Block Styling (與首頁一致) */
+        pre {
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 4px;
+            position: relative;
+            margin: 15px 0;
+            padding: 0;
+            max-width: 100%;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #2d2d2d;
+            padding: 5px 10px;
+            border-bottom: 1px solid #444;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        
+        code { font-family: 'Consolas', monospace; }
+        pre code {
+            display: block;
+            padding: 10px;
+            overflow-x: auto;
+            color: #abb2bf;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+        .copy-btn:hover { color: #fff; }
+        .copy-btn svg { width: 16px; height: 16px; }
+        
+        /* New Session Button */
+        #new-btn {
+            position: absolute; 
+            top: 0; 
+            right: 0;
+            background: transparent; 
+            border: 1px solid var(--term-green); 
+            color: var(--term-green);
+            padding: 8px 15px; 
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        #new-btn:hover { background: var(--term-green); color: #000; }
+
+        @media (max-width: 600px) {
+            #new-btn { position: relative; display: block; text-align: center; margin-bottom: 20px; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="/" id="new-btn">ESTABLISH NEW LINK</a>
+        <h1>// SECURE ARCHIVE</h1>
+        <div class="meta" id="meta-info">Retrieving encrypted data...</div>
+        <div id="log-container"></div>
+    </div>
+
+    <script>
+        // --- 1. 設定 Marked 與 Highlight.js ---
+        marked.setOptions({
+            highlight: function(code, lang) {
+                const language = highlight.getLanguage(lang) ? lang : 'plaintext';
+                return highlight.highlight(code, { language }).value;
+            },
+            langPrefix: 'hljs language-'
+        });
+
+        // --- 2. 設定自定義 Renderer (為了複製按鈕) ---
+        const renderer = new marked.Renderer();
+        renderer.code = function(code, language) {
+            const validLang = language || 'text';
+            const copyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+            
+            return `
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="lang">${validLang}</span>
+                        <button class="copy-btn" onclick="copyCode(this)">${copyIcon}</button>
+                    </div>
+                    <pre><code class="hljs language-${validLang}">${code}</code></pre>
+                    <div class="hidden-code" style="display:none;">${code}</div> 
+                </div>
+            `;
+        };
+        marked.use({ renderer });
+
+        // --- 3. 抓取資料邏輯 ---
+        const pathParts = window.location.pathname.split('/');
+        const chatID = pathParts[pathParts.length - 1];
+
+        async function loadChat() {
+            try {
+                const res = await fetch(`/api/saved/${chatID}`);
+                if (!res.ok) throw new Error("Log Missing");
+                
+                const data = await res.json();
+                
+                // 顯示 Meta 資訊
+                const date = new Date(data.timestamp).toLocaleString();
+                document.getElementById('meta-info').innerText = `ID: ${chatID} | MODEL: ${data.model || 'Unknown'} | ARCHIVED: ${date}`;
+                
+                const container = document.getElementById('log-container');
+                
+                // 渲染對話
+                data.history.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'msg';
+                    
+                    const role = document.createElement('div');
+                    role.className = `role role-${msg.role === 'user' ? 'user' : 'assistant'}`;
+                    role.innerText = msg.role === 'user' ? '>> USER' : '>> ZELFA';
+                    
+                    const content = document.createElement('div');
+                    content.className = 'content';
+                    
+                    // 使用 Marked 解析 Markdown
+                    if (msg.role === 'assistant') {
+                        content.innerHTML = marked.parse(msg.content);
+                    } else {
+                        // User 訊息只做簡單轉義，或者你要它也支援 markdown 也可以
+                        content.textContent = msg.content; 
+                    }
+                    
+                    div.appendChild(role);
+                    div.appendChild(content);
+                    container.appendChild(div);
+                });
+
+            } catch (e) {
+                document.body.innerHTML = `
+                    <div style="display:flex;height:100vh;justify-content:center;align-items:center;flex-direction:column;color:var(--alert-red);text-align:center;">
+                        <h1 style="border:none;color:var(--alert-red);">404 // DATA CORRUPTED</h1>
+                        <p>The requested log does not exist or has been purged.</p>
+                        <a href="/" style="color:var(--term-green);margin-top:20px;">Return to Terminal</a>
+                    </div>
+                `;
+            }
+        }
+
+        // --- 4. 複製功能的實作 (Global Function) ---
+        window.copyCode = function(btn) {
+            const container = btn.closest('.code-block');
+            const code = container.querySelector('.hidden-code').textContent; // 從隱藏區塊抓原始碼
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const originalIcon = btn.innerHTML;
+                // 變成綠色勾勾
+                btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#00ff41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalIcon;
+                }, 2000);
+            });
+        }
+
+        loadChat();
+    </script>
+</body>
+</html>
