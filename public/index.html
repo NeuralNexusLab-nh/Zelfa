@@ -27,11 +27,11 @@
             color: var(--term-green);
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
-            height: 100dvh; 
+            height: 100dvh; /* 手機版關鍵：動態視窗高度 */
             width: 100vw;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* 禁止 Body 滾動，只讓 chat-box 滾 */
         }
 
         /* Scanline effect */
@@ -54,7 +54,8 @@
             align-items: center;
             background: #000;
             z-index: 1000;
-            flex-shrink: 0;
+            flex-shrink: 0; /* 確保 Header 不會被擠壓 */
+            height: 50px;
         }
         
         @media (max-width: 600px) {
@@ -82,22 +83,29 @@
         #save-btn:hover { background: var(--user-cyan); color: #000; }
 
         #chat-box {
-            flex: 1;
-            overflow-y: auto;
+            flex: 1; /* 佔滿剩餘空間 */
+            overflow-y: auto; /* 允許垂直滾動 */
+            overflow-x: hidden; /* 禁止水平滾動 (避免版面爆掉) */
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            min-height: 0;
+            min-height: 0; /* Flexbox 滾動修復關鍵 */
+            width: 100%;
         }
 
         .msg {
-            max-width: 90%;
+            max-width: 95%; /* 稍微留邊 */
             padding: 10px;
             line-height: 1.5;
             position: relative;
+            
+            /* 關鍵修復：防止長文字撐爆框框 */
             word-wrap: break-word;
+            overflow-wrap: break-word; 
+            word-break: break-word;
         }
+
         .msg-user {
             align-self: flex-end;
             text-align: right;
@@ -110,7 +118,7 @@
             border-left: 2px solid var(--term-green);
             color: #ddd; 
             background: rgba(0, 255, 65, 0.05);
-            min-height: 40px; /* 防止閃爍 */
+            width: 100%; /* 讓它能佔滿寬度 */
         }
         
         .msg-ai p { margin: 5px 0; }
@@ -122,9 +130,11 @@
             animation: blink 1s step-end infinite;
             color: var(--term-green);
             margin-left: 5px;
+            display: inline-block;
         }
         @keyframes blink { 50% { opacity: 0; } }
 
+        /* Code Block Fixes */
         pre {
             background: #1e1e1e;
             border: 1px solid #444;
@@ -132,7 +142,11 @@
             position: relative;
             margin: 10px 0;
             padding: 0;
+            
+            /* 關鍵修復：程式碼太長時出現水平捲軸，而不是撐開頁面 */
             max-width: 100%;
+            overflow-x: auto;
+            white-space: pre; /* 保持程式碼排版 */
         }
         
         .code-header {
@@ -144,13 +158,14 @@
             border-bottom: 1px solid #444;
             font-size: 0.8rem;
             color: #aaa;
+            position: sticky; /* 讓 Header 黏在上面 */
+            left: 0;
         }
         
         code { font-family: 'Consolas', monospace; }
         pre code {
             display: block;
             padding: 10px;
-            overflow-x: auto;
             color: #abb2bf;
         }
 
@@ -173,7 +188,8 @@
             gap: 10px;
             background: #000;
             z-index: 1000;
-            flex-shrink: 0;
+            flex-shrink: 0; /* 確保輸入框不會消失 */
+            min-height: 70px;
             padding-bottom: env(safe-area-inset-bottom, 20px); 
         }
         
@@ -187,6 +203,7 @@
             outline: none;
             border-radius: 0;
             -webkit-appearance: none;
+            font-size: 16px; /* 防止 iOS 自動放大 */
         }
         
         button#send-btn {
@@ -199,6 +216,7 @@
             white-space: nowrap;
         }
 
+        /* Modal Styles */
         #hacker-modal {
             display: none;
             position: fixed;
@@ -243,7 +261,6 @@
 
 <header>
     <div>ZELFA_NODE</div>
-    <!-- Model Name Formatted Beautifully -->
     <select id="model-select">
         <option value="gpt-oss:120b">GPT-OSS 120b</option>
         <option value="deepseek-v3.1:671b">DeepSeek V3.1</option>
@@ -318,7 +335,6 @@
         div.className = `msg msg-${role}`;
         
         if (role === 'ai') {
-            // AI 訊息先保留空，等待串流填入
             div.innerHTML = '<span class="typing-cursor"></span>';
         } else {
             div.textContent = text;
@@ -336,17 +352,14 @@
         input.value = '';
         input.disabled = true;
         
-        // 1. Render User Message
         renderMsg('user', text);
         history.push({ role: 'user', content: text });
 
-        // 2. Prepare AI Message Container
         const aiMsgDiv = renderMsg('ai', '');
         const model = document.getElementById('model-select').value;
         
         let fullReply = "";
         
-        // --- STREAMING LOGIC ---
         try {
             const response = await fetch('/api/models', {
                 method: 'POST',
@@ -364,49 +377,55 @@
                 return;
             }
 
-            // Reader for Streaming
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            
-            // Hacker Typing Effect Buffer
             let queue = "";
             
-            // 啟動打字機迴圈
+            // 打字機特效 + 強制滾動
             const typeLoop = setInterval(() => {
                 if (queue.length > 0) {
-                    // 每次取一個字元，速度極快但有逐字感
                     const char = queue[0];
                     queue = queue.slice(1);
                     fullReply += char;
-                    // 使用 Marked 解析 Markdown，並加上游標
+                    
+                    // 解析 Markdown
                     aiMsgDiv.innerHTML = marked.parse(fullReply) + '<span class="typing-cursor"></span>';
+                    
+                    // Highlight code blocks
+                    aiMsgDiv.querySelectorAll('pre code').forEach((block) => {
+                       hljs.highlightElement(block);
+                    });
+
+                    // 強制滾動到底部
                     chatBox.scrollTop = chatBox.scrollHeight;
                 }
-            }, 5); // 5ms 極速打字
+            }, 5); 
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 const chunk = decoder.decode(value, { stream: true });
-                queue += chunk; // 將收到的資料推入打字機緩衝區
+                queue += chunk;
+                // 收到新資料時也強制滾動一次，以防萬一
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
 
-            // 等待緩衝區清空
             const checkDone = setInterval(() => {
                 if (queue.length === 0) {
                     clearInterval(typeLoop);
                     clearInterval(checkDone);
-                    // 移除游標
                     aiMsgDiv.innerHTML = marked.parse(fullReply);
                     history.push({ role: 'assistant', content: fullReply });
                     isGenerating = false;
                     input.disabled = false;
                     input.focus();
                     
-                    // Highlight.js needs re-run on new content
                     document.querySelectorAll('pre code').forEach((block) => {
                        hljs.highlightElement(block);
                     });
+                    
+                    // 最後再滾一次
+                    chatBox.scrollTop = chatBox.scrollHeight;
                 }
             }, 100);
 
