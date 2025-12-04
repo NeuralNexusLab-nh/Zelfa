@@ -9,6 +9,11 @@ const fetch = require('node-fetch'); // 使用 v2 版本
 const app = express();
 app.set('trust proxy', true);
 
+app.use((req, res, next) => {
+    console.log("Req from " + req.ip + ", path is " + req.path);
+    next();
+});
+
 // --- CONFIG ---
 const PORT = process.env.PORT || 3000;
 const DOMAIN = 'zelfa.nethacker.cloud'; // 你的域名
