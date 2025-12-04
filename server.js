@@ -104,6 +104,10 @@ app.get('/api/saved/:id', (req, res) => {
     }
 });
 
+app.all("/healthz", (req, res) => {
+    res.status(200).send("true");
+});
+
 // 4. 儲存對話 API
 app.post('/api/save', async (req, res) => {
     const { history, model } = req.body;
