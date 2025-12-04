@@ -110,11 +110,21 @@
             border-left: 2px solid var(--term-green);
             color: #ddd; 
             background: rgba(0, 255, 65, 0.05);
+            min-height: 40px; /* 防止閃爍 */
         }
         
         .msg-ai p { margin: 5px 0; }
         .msg-ai strong { color: #fff; }
         
+        /* Cursor Animation */
+        .typing-cursor::after {
+            content: '█';
+            animation: blink 1s step-end infinite;
+            color: var(--term-green);
+            margin-left: 5px;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
         pre {
             background: #1e1e1e;
             border: 1px solid #444;
@@ -232,19 +242,20 @@
 <body>
 
 <header>
-    <div>ZELFA</div>
+    <div>ZELFA_NODE</div>
+    <!-- Model Name Formatted Beautifully -->
     <select id="model-select">
-        <option value="gpt-oss:120b">GPT oss</option>
-        <option value="deepseek-v3.1:671b">DeepSeek v3</option>
+        <option value="gpt-oss:120b">GPT-OSS 120b</option>
+        <option value="deepseek-v3.1:671b">DeepSeek V3.1</option>
         <option value="qwen3-coder:480b">Qwen3 Coder</option>
         <option value="kimi-k2:1t">Kimi K2</option>
         <option value="kimi-k2-thinking">Kimi K2 Thinking</option>
         <option value="cogito-2.1:671b">Cogito 2.1</option>
         <option value="glm-4.6">GLM 4.6</option>
         <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-        <option value="gpt-5-nano">GPT 5 nano</option>
-        <option value="o3-mini">o3 mini</option>
-        <option value="gpt-5.1-codex-mini">gpt 5.1 codex mini</option>
+        <option value="gpt-5-nano">GPT-5 Nano</option>
+        <option value="o3-mini">o3-mini</option>
+        <option value="gpt-5.1-codex-mini">GPT-5.1 Codex</option>
     </select>
     <button id="save-btn" onclick="saveChat()">SAVE</button>
 </header>
@@ -258,7 +269,6 @@
     <button id="send-btn" onclick="sendMessage()">SEND</button>
 </div>
 
-<!-- Hacker Modal -->
 <div id="hacker-modal">
     <div class="modal-content">
         <div class="modal-title">>> DATA EXPORTED <<</div>
@@ -275,13 +285,11 @@
 </div>
 
 <script>
-    // 修正: 參數解構 ({ text, lang })，適配 Marked v12+
+    // Config Marked.js
     const renderer = new marked.Renderer();
     renderer.code = function({ text, lang }) {
         const validLang = !!(lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
-        // 手動執行 Highlight
         const highlighted = hljs.highlight(text, { language: validLang }).value;
-        
         const copyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
         
         return `
@@ -298,63 +306,114 @@
     marked.use({ renderer });
 
     let history = []; 
+    let isGenerating = false;
 
     const chatBox = document.getElementById('chat-box');
     const input = document.getElementById('user-input');
 
-    input.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+    input.addEventListener('keypress', (e) => { if(e.key === 'Enter' && !isGenerating) sendMessage(); });
 
     function renderMsg(role, text) {
         const div = document.createElement('div');
         div.className = `msg msg-${role}`;
+        
         if (role === 'ai') {
-            div.innerHTML = marked.parse(text);
+            // AI 訊息先保留空，等待串流填入
+            div.innerHTML = '<span class="typing-cursor"></span>';
         } else {
             div.textContent = text;
         }
         chatBox.appendChild(div);
         chatBox.scrollTop = chatBox.scrollHeight;
+        return div;
     }
 
     async function sendMessage() {
         const text = input.value.trim();
         if (!text) return;
 
+        isGenerating = true;
         input.value = '';
-        renderMsg('user', text);
+        input.disabled = true;
         
+        // 1. Render User Message
+        renderMsg('user', text);
         history.push({ role: 'user', content: text });
 
+        // 2. Prepare AI Message Container
+        const aiMsgDiv = renderMsg('ai', '');
         const model = document.getElementById('model-select').value;
-        setTimeout(() => chatBox.scrollTop = chatBox.scrollHeight, 100);
-
+        
+        let fullReply = "";
+        
+        // --- STREAMING LOGIC ---
         try {
-            const res = await fetch('/api/models', {
+            const response = await fetch('/api/models', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: model,
-                    prompt: text,
                     messages: history
                 })
             });
 
-            if (res.status === 429) {
-                renderMsg('ai', '**[SYSTEM ALERT]** Rate limit exceeded (135/day).');
+            if (response.status === 429) {
+                aiMsgDiv.innerHTML = '**[SYSTEM ALERT]** Rate limit exceeded (135/day).';
+                isGenerating = false;
+                input.disabled = false;
                 return;
             }
 
-            const data = await res.json();
+            // Reader for Streaming
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            // Hacker Typing Effect Buffer
+            let queue = "";
+            
+            // 啟動打字機迴圈
+            const typeLoop = setInterval(() => {
+                if (queue.length > 0) {
+                    // 每次取一個字元，速度極快但有逐字感
+                    const char = queue[0];
+                    queue = queue.slice(1);
+                    fullReply += char;
+                    // 使用 Marked 解析 Markdown，並加上游標
+                    aiMsgDiv.innerHTML = marked.parse(fullReply) + '<span class="typing-cursor"></span>';
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            }, 5); // 5ms 極速打字
 
-            if (data.reply) {
-                renderMsg('ai', data.reply);
-                history.push({ role: 'assistant', content: data.reply });
-            } else {
-                renderMsg('ai', '[ERROR] Node returned empty response.');
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                queue += chunk; // 將收到的資料推入打字機緩衝區
             }
 
+            // 等待緩衝區清空
+            const checkDone = setInterval(() => {
+                if (queue.length === 0) {
+                    clearInterval(typeLoop);
+                    clearInterval(checkDone);
+                    // 移除游標
+                    aiMsgDiv.innerHTML = marked.parse(fullReply);
+                    history.push({ role: 'assistant', content: fullReply });
+                    isGenerating = false;
+                    input.disabled = false;
+                    input.focus();
+                    
+                    // Highlight.js needs re-run on new content
+                    document.querySelectorAll('pre code').forEach((block) => {
+                       hljs.highlightElement(block);
+                    });
+                }
+            }, 100);
+
         } catch (e) {
-            renderMsg('ai', `[CRITICAL FAILURE] Connection lost.`);
+            aiMsgDiv.textContent = "[CRITICAL FAILURE] Connection lost.";
+            isGenerating = false;
+            input.disabled = false;
         }
     }
 
