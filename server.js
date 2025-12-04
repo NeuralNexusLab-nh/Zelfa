@@ -11,7 +11,7 @@ app.set('trust proxy', true);
 
 // Debug Log
 app.use((req, res, next) => {
-    // console.log("Req from " + req.ip + ", path is " + req.path);
+    console.log("Req from " + req.ip + ", path is " + req.path);
     next();
 });
 
