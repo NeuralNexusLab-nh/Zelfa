@@ -40,7 +40,7 @@ const MODEL_REGISTRY = {
 };
 
 // --- FILE OPS ---
-const SAVED_CHATS_FILE = path.join(__dirname, 'saved_chats.json');
+const SAVED_CHATS_FILE = path.join(__dirname, 'saved', 'chats.json');
 
 if (!fs.existsSync(SAVED_CHATS_FILE)) {
     fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify({}));
