@@ -11,7 +11,7 @@ app.set('trust proxy', true);
 
 // Debug Log
 app.use((req, res, next) => {
-    console.log("Req from " + req.ip + ", path is " + req.path);
+    // console.log("Req from " + req.ip + ", path is " + req.path);
     next();
 });
 
@@ -39,9 +39,16 @@ const MODEL_REGISTRY = {
     'gpt-5.1-codex-mini': { provider: 'OpenAI' }
 };
 
-// --- FILE OPS ---
-const SAVED_CHATS_FILE = path.join(__dirname, 'saved', 'chats.json');
+// --- FILE OPS (BUG FIXED HERE) ---
+const SAVED_DIR = path.join(__dirname, 'saved'); // 定義資料夾路徑
+const SAVED_CHATS_FILE = path.join(SAVED_DIR, 'chats.json'); // 定義檔案路徑
 
+// 1. 先檢查資料夾是否存在，不存在就建立
+if (!fs.existsSync(SAVED_DIR)) {
+    fs.mkdirSync(SAVED_DIR);
+}
+
+// 2. 再檢查檔案是否存在，不存在就建立
 if (!fs.existsSync(SAVED_CHATS_FILE)) {
     fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify({}));
 }
@@ -50,14 +57,11 @@ if (!fs.existsSync(SAVED_CHATS_FILE)) {
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Security & CORS Headers (修改重點：允許所有來源)
+// Security & CORS Headers
 app.use((req, res, next) => {
-    // 允許任何網域存取 (CORS Open)
     res.setHeader('Access-Control-Allow-Origin', '*'); 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-    // 安全標頭
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     
@@ -107,7 +111,6 @@ app.get('/api/saved/:id', (req, res) => {
 
 app.post('/api/save', async (req, res) => {
     const { history, model } = req.body;
-    // 限制稍微放寬一點，避免測試時一直存不了
     if (!history || history.length < 2) {
         return res.status(400).json({ error: "Insufficient data to save." });
     }
@@ -123,7 +126,6 @@ app.post('/api/save', async (req, res) => {
     
     fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify(savedData, null, 2));
 
-    // [修改重點] 動態抓取當前的 Protocol (http/https) 和 Host (domain:port)
     const protocol = req.headers['x-forwarded-proto'] || req.protocol;
     const host = req.get('host');
     const dynamicLink = `${protocol}://${host}/chat/${chatId}`;
@@ -138,7 +140,6 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
     
     if (!config) return res.status(400).json({ error: `Invalid Model` });
 
-    // Memory protection: Keep last 15 messages
     const recentMessages = messages.slice(-15).map(m => ({
         role: m.role === 'ai' ? 'assistant' : m.role,
         content: m.content
@@ -199,13 +200,11 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
             );
         }
 
-        // Stream Processing with Buffer
-        // 確保串流中斷的 JSON 片段能被正確接合
         let buffer = ""; 
 
         for await (const chunk of apiRes.body) {
             const lines = (buffer + chunk.toString()).split('\n');
-            buffer = lines.pop(); // 保留最後一行（可能不完整）到下一次迴圈
+            buffer = lines.pop(); 
 
             for (const line of lines) {
                 const trimmed = line.trim();
@@ -239,12 +238,10 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                     if (text) res.write(text);
 
                 } catch (e) { 
-                    // Ignore parse errors for current line, wait for buffer
                 }
             }
         }
         
-        // 結束串流
         res.end();
 
     } catch (e) {
