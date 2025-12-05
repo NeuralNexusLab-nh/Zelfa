@@ -17,7 +17,6 @@ app.use((req, res, next) => {
 
 // --- CONFIG ---
 const PORT = process.env.PORT || 3000;
-const DOMAIN = 'zelfa.nethacker.cloud';
 
 const API_KEYS = {
     GAS: process.env.GASAPI || "",
@@ -51,9 +50,20 @@ if (!fs.existsSync(SAVED_CHATS_FILE)) {
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Security & CORS Headers (修改重點：允許所有來源)
 app.use((req, res, next) => {
+    // 允許任何網域存取 (CORS Open)
+    res.setHeader('Access-Control-Allow-Origin', '*'); 
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // 安全標頭
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
+    
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
     next();
 });
 
@@ -68,8 +78,8 @@ const checkRateLimit = (req, res, next) => {
         record = { date: today, count: 0 };
     }
     
-    if (record.count >= 135) {
-        return res.status(429).json({ error: "Rate limit exceeded (135/day)." });
+    if (record.count >= 50) {
+        return res.status(429).json({ error: "Rate limit exceeded (50/day)." });
     }
     
     record.count++;
@@ -95,24 +105,30 @@ app.get('/api/saved/:id', (req, res) => {
     else res.status(404).json({ error: "Not found" });
 });
 
-app.all("/healthz", (req, res) => {
-    res.status(200).send("true");
-});
-
 app.post('/api/save', async (req, res) => {
     const { history, model } = req.body;
-    if (!history || history.length < 10) {
-        return res.status(400).json({ error: "Insufficient data. Need at least 5 interaction cycles." });
+    // 限制稍微放寬一點，避免測試時一直存不了
+    if (!history || history.length < 2) {
+        return res.status(400).json({ error: "Insufficient data to save." });
     }
+    
     const chatId = uuidv4();
     const savedData = JSON.parse(fs.readFileSync(SAVED_CHATS_FILE));
+    
     savedData[chatId] = {
         timestamp: new Date().toISOString(),
         model: model,
         history: history
     };
+    
     fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify(savedData, null, 2));
-    res.json({ link: `https://${DOMAIN}/chat/${chatId}`, id: chatId });
+
+    // [修改重點] 動態抓取當前的 Protocol (http/https) 和 Host (domain:port)
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.get('host');
+    const dynamicLink = `${protocol}://${host}/chat/${chatId}`;
+
+    res.json({ link: dynamicLink, id: chatId });
 });
 
 // --- STREAMING INFERENCE API ---
@@ -128,15 +144,15 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
         content: m.content
     }));
 
-    // Setup Server-Sent Events / Stream Header
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Transfer-Encoding', 'chunked');
 
     try {
+        let apiRes;
         
-        // --- OLLAMA STREAMING ---
+        // --- OLLAMA ---
         if (config.provider === "Ollama") {
-            const apiRes = await fetch("https://ollama.com/api/chat", {
+            apiRes = await fetch("https://ollama.com/api/chat", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -145,28 +161,14 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                 body: JSON.stringify({
                     model: model,
                     messages: recentMessages,
-                    stream: true // Enable Streaming
+                    stream: true 
                 })
             });
-
-            // Ollama sends JSON objects one per line
-            for await (const chunk of apiRes.body) {
-                const lines = chunk.toString().split('\n');
-                for (const line of lines) {
-                    if (!line.trim()) continue;
-                    try {
-                        const json = JSON.parse(line);
-                        if (json.message && json.message.content) {
-                            res.write(json.message.content);
-                        }
-                    } catch (e) { /* ignore parse errors for partial chunks */ }
-                }
-            }
         }
 
-        // --- OPENAI STREAMING ---
+        // --- OPENAI ---
         else if (config.provider === "OpenAI") {
-            const apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+            apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -175,36 +177,19 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                 body: JSON.stringify({
                     model: model,
                     messages: recentMessages,
-                    stream: true // Enable Streaming
+                    stream: true 
                 })
             });
-
-            // OpenAI sends "data: {JSON}"
-            for await (const chunk of apiRes.body) {
-                const lines = chunk.toString().split('\n');
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        const jsonStr = line.replace('data: ', '').trim();
-                        if (jsonStr === '[DONE]') continue;
-                        try {
-                            const json = JSON.parse(jsonStr);
-                            const text = json.choices[0]?.delta?.content || '';
-                            if (text) res.write(text);
-                        } catch (e) { }
-                    }
-                }
-            }
         }
 
-        // --- GOOGLE STREAMING (SSE Mode) ---
+        // --- GOOGLE ---
         else if (config.provider === "Google") {
             const googleContents = recentMessages.map(m => ({
                 role: m.role === 'user' ? 'user' : 'model',
                 parts: [{ text: m.content }]
             }));
 
-            // Use streamGenerateContent with alt=sse for easier parsing
-            const apiRes = await fetch(
+            apiRes = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${API_KEYS.GAS}`,
                 {
                     method: "POST",
@@ -212,22 +197,55 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                     body: JSON.stringify({ contents: googleContents })
                 }
             );
+        }
 
-            for await (const chunk of apiRes.body) {
-                const lines = chunk.toString().split('\n');
-                for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                        try {
-                            const json = JSON.parse(line.replace('data: ', '').trim());
-                            const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                            if (text) res.write(text);
-                        } catch (e) { }
+        // Stream Processing with Buffer
+        // 確保串流中斷的 JSON 片段能被正確接合
+        let buffer = ""; 
+
+        for await (const chunk of apiRes.body) {
+            const lines = (buffer + chunk.toString()).split('\n');
+            buffer = lines.pop(); // 保留最後一行（可能不完整）到下一次迴圈
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                
+                try {
+                    let text = "";
+
+                    if (config.provider === "Ollama") {
+                        const json = JSON.parse(trimmed);
+                        if (json.message && json.message.content) {
+                            text = json.message.content;
+                        }
+                    } 
+                    else if (config.provider === "OpenAI") {
+                        if (trimmed.startsWith('data: ')) {
+                            const dataStr = trimmed.replace('data: ', '').trim();
+                            if (dataStr !== '[DONE]') {
+                                const json = JSON.parse(dataStr);
+                                text = json.choices[0]?.delta?.content || "";
+                            }
+                        }
                     }
+                    else if (config.provider === "Google") {
+                        if (trimmed.startsWith('data: ')) {
+                            const json = JSON.parse(trimmed.replace('data: ', '').trim());
+                            text = json.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                        }
+                    }
+
+                    if (text) res.write(text);
+
+                } catch (e) { 
+                    // Ignore parse errors for current line, wait for buffer
                 }
             }
         }
-
-        res.end(); // Finish stream
+        
+        // 結束串流
+        res.end();
 
     } catch (e) {
         console.error("Stream Error:", e);
