@@ -29,18 +29,16 @@ const MODEL_REGISTRY = {
     'cogito-2.1:671b': { provider: 'Ollama' },
     'glm-4.6': { provider: 'Ollama' },
     'kimi-k2:1t': { provider: 'Ollama' },
-    'kimi-k2-thinking': { provider: 'Ollama' },
     'qwen3-coder:480b': { provider: 'Ollama' },
-    'deepseek-v3.1:671b': { provider: 'Ollama' },
-    'gpt-oss:120b': { provider: 'Ollama' },
+    'deepseek-v3.2': { provider: 'Ollama' },
+    'gemma3:27b': { provider: 'Ollama' },
+    'gemini-3-pro-preview': { provider: 'Ollama' },
+    'ministral-3:14b': { provider: 'Ollama' },
+    'minimax-m2': { provider: 'Ollama' },
     'gemini-2.0-flash': { provider: 'Google' },
-    'gpt-5.1': { provider: 'OpenAI' },
-    'gpt-5': { provider: 'OpenAI' },
-    'gpt-5.1-codex-max': { provider: 'OpenAI' },
-    'gpt-5-pro': { provider: 'OpenAI' },
-    'gpt-4.1': { provider: 'OpenAI' },
-    'gpt-4o': { provider: 'OpenAI' },
-    'o1-pro': { provider: 'OpenAI' }
+    'gpt-5-nano': { provider: 'OpenAI' },
+    'gpt-4o-mini': { provider: 'OpenAI' },
+    'gpt-4.1-nano': { provider: 'OpenAI' }
 };
 
 // --- FILE OPS (BUG FIXED HERE) ---
@@ -151,10 +149,6 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Transfer-Encoding', 'chunked');
-
-    if (config.provider === "OpenAI") {
-        model = "gpt-5-nano";
-    }
 
     try {
         let apiRes;
