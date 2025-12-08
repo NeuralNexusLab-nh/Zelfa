@@ -19,7 +19,6 @@ app.use((req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 const API_KEYS = {
-    GAS: process.env.GASAPI || "",
     OA: process.env.OAAPI || "",
     OLM: process.env.OLMAPI || ""
 };
@@ -35,7 +34,6 @@ const MODEL_REGISTRY = {
     'gemini-3-pro-preview': { provider: 'Ollama' },
     'ministral-3:14b': { provider: 'Ollama' },
     'minimax-m2': { provider: 'Ollama' },
-    'gemini-2.0-flash': { provider: 'Google' },
     'gpt-5-nano': { provider: 'OpenAI' },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' }
