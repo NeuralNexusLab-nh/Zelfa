@@ -28,6 +28,7 @@ const MODEL_REGISTRY = {
     'cogito-2.1:671b': { provider: 'Ollama' },
     'glm-4.6': { provider: 'Ollama' },
     'kimi-k2:1t': { provider: 'Ollama' },
+    'qwen3-vl:235b': { provider: 'Ollama' },
     'qwen3-coder:480b': { provider: 'Ollama' },
     'deepseek-v3.2': { provider: 'Ollama' },
     'gemma3:27b': { provider: 'Ollama' },
