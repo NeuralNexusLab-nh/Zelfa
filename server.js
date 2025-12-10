@@ -253,4 +253,8 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
     }
 });
 
+app.all("*", (req, res) => {
+    res.redirect("https://zelfaz.nethacker.cloud");
+});
+
 app.listen(PORT, () => console.log(`Zelfa Hacker Edition Online: ${PORT}`));
