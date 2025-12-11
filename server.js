@@ -211,6 +211,7 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                             if (dataStr !== '[DONE]') {
                                 const json = JSON.parse(dataStr);
                                 text = json.choices[0]?.delta?.content || "";
+                                console.log(json);
                             }
                         }
                     }
