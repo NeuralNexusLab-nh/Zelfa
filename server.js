@@ -38,7 +38,8 @@ const MODEL_REGISTRY = {
     'minimax-m2': { provider: 'Ollama' },
     'gpt-5-nano': { provider: 'OpenAI' },
     'gpt-4o-mini': { provider: 'OpenAI' },
-    'gpt-4.1-nano': { provider: 'OpenAI' }
+    'gpt-4.1-nano': { provider: 'OpenAI' },
+    'gpt-5.1-codex-mini': { provider: 'OpenAI' }
 };
 
 // --- FILE OPS (BUG FIXED HERE) ---
@@ -185,23 +186,6 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
             });
         }
 
-        // --- GOOGLE ---
-        else if (config.provider === "Google") {
-            const googleContents = recentMessages.map(m => ({
-                role: m.role === 'user' ? 'user' : 'model',
-                parts: [{ text: m.content }]
-            }));
-
-            apiRes = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${API_KEYS.GAS}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: googleContents })
-                }
-            );
-        }
-
         let buffer = ""; 
 
         for await (const chunk of apiRes.body) {
@@ -230,13 +214,6 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                             }
                         }
                     }
-                    else if (config.provider === "Google") {
-                        if (trimmed.startsWith('data: ')) {
-                            const json = JSON.parse(trimmed.replace('data: ', '').trim());
-                            text = json.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                        }
-                    }
-
                     if (text) res.write(text);
 
                 } catch (e) { 
