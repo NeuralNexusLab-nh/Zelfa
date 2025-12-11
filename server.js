@@ -38,8 +38,7 @@ const MODEL_REGISTRY = {
     'minimax-m2': { provider: 'Ollama' },
     'gpt-5-nano': { provider: 'OpenAI' },
     'gpt-4o-mini': { provider: 'OpenAI' },
-    'gpt-4.1-nano': { provider: 'OpenAI' },
-    'gpt-5.1-codex-mini': { provider: 'OpenAI' }
+    'gpt-4.1-nano': { provider: 'OpenAI' }
 };
 
 // --- FILE OPS (BUG FIXED HERE) ---
@@ -77,7 +76,7 @@ app.use((req, res, next) => {
 // --- RATE LIMITER ---
 const ipLimits = new Map();
 const checkRateLimit = (req, res, next) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const ip = req.ip || "";
     const today = new Date().toISOString().split('T')[0];
     let record = ipLimits.get(ip);
     
@@ -211,7 +210,6 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                             if (dataStr !== '[DONE]') {
                                 const json = JSON.parse(dataStr);
                                 text = json.choices[0]?.delta?.content || "";
-                                console.log(json);
                             }
                         }
                     }
