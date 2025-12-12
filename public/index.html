@@ -27,11 +27,11 @@
             color: var(--term-green);
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
-            height: 100dvh;
+            height: 100dvh; 
             width: 100vw;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* 關鍵：防止整個網頁出現捲軸 */
         }
 
         /* Scanline effect */
@@ -83,25 +83,28 @@
         #save-btn:hover { background: var(--user-cyan); color: #000; }
 
         #chat-box {
-            flex: 1;
+            flex: 1; 
             overflow-y: auto;
-            overflow-x: hidden;
+            overflow-x: hidden; /* 禁止水平捲動 */
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            min-height: 0;
+            min-height: 0; /* Flexbox 溢出修復 */
             width: 100%;
         }
 
         .msg {
-            max-width: 95%;
+            max-width: 100%;
             padding: 10px;
             line-height: 1.5;
             position: relative;
-            word-wrap: break-word;
-            overflow-wrap: break-word; 
-            word-break: break-word;
+            
+            /* 強制斷行，防止長字串撐爆 */
+            white-space: pre-wrap;       
+            word-wrap: break-word;       
+            overflow-wrap: anywhere;     
+            box-sizing: border-box;
         }
 
         .msg-user {
@@ -110,14 +113,17 @@
             border-right: 2px solid var(--user-cyan);
             color: var(--user-cyan);
             background: rgba(0, 255, 255, 0.05);
+            max-width: 90%; 
         }
+
         .msg-ai {
             align-self: flex-start;
             border-left: 2px solid var(--term-green);
             color: #ddd; 
             background: rgba(0, 255, 65, 0.05);
-            width: 100%;
-            min-height: 24px;
+            width: 100%; 
+            display: block; 
+            min-width: 0; 
         }
         
         .msg-ai p { margin: 5px 0; }
@@ -133,6 +139,7 @@
         }
         @keyframes blink { 50% { opacity: 0; } }
 
+        /* Code Block Fixes */
         pre {
             background: #1e1e1e;
             border: 1px solid #444;
@@ -140,8 +147,10 @@
             position: relative;
             margin: 10px 0;
             padding: 0;
-            max-width: 100%;
-            overflow-x: auto;
+            
+            max-width: 100%; 
+            width: 100%;     
+            overflow-x: auto; 
             white-space: pre; 
         }
         
@@ -156,6 +165,7 @@
             color: #aaa;
             position: sticky;
             left: 0;
+            top: 0;
         }
         
         code { font-family: 'Consolas', monospace; }
@@ -200,6 +210,7 @@
             border-radius: 0;
             -webkit-appearance: none;
             font-size: 16px;
+            min-width: 0; 
         }
         
         /* Button Styles */
@@ -287,22 +298,24 @@
 <body>
 
 <header>
-    <div>ZELFA_NODE</div>
+    <div>ZELFA</div>
     <select id="model-select">
-        <option value="gpt-oss:120b">GPT-OSS (Ollama)</option>
-        <option value="deepseek-v3.2">DeepSeek V3.2 (Ollama)</option>
-        <option value="gemma3:27b">Gemma3 (Ollama)</option>
-        <option value="gemini-3-pro-preview">Gemini 3 Pro Preview (Ollama)</option>
-        <option value="qwen3-vl:235b">Qwen3 VL (Ollama)</option>
+        <option value="gpt-oss:120b">GPT-OSS (Ollama)</option> 
+        <option value="deepseek-v3.2">DeepSeek V3.2 (Ollama)</option> 
+        <option value="gemma3:27b">Gemma3 (Ollama)</option> 
+        <option value="gemini-3-pro-preview">Gemini 3 Pro Preview (Ollama)</option> 
+        <option value="qwen3-vl:235b">Qwen3 VL (Ollama)</option> 
         <option value="qwen3-coder:480b">Qwen3 Coder (Ollama)</option>
-        <option value="ministral-3:14b">Ministral 3 (Ollama)</option>
-        <option value="minimax-m2">Minimax M2 (Ollama)</option>
-        <option value="kimi-k2:1t">Kimi K2 (Ollama)</option>
-        <option value="cogito-2.1:671b">Cogito 2.1 (Ollama)</option>
-        <option value="glm-4.6">GLM 4.6 (Ollama)</option>
-        <option value="gpt-5-nano">GPT 5 Nano (OpenAI)</option>
-        <option value="gpt-4.1-nano">GPT 4.1 Nano (OpenAI)</option>
+        <option value="ministral-3:14b">Ministral 3 (Ollama)</option> 
+        <option value="minimax-m2">Minimax M2 (Ollama)</option> 
+        <option value="kimi-k2:1t">Kimi K2 (Ollama)</option> 
+        <option value="cogito-2.1:671b">Cogito 2.1 (Ollama)</option> 
+        <option value="glm-4.6">GLM 4.6 (Ollama)</option> 
+        <option value="gpt-5-nano">GPT 5 Nano (OpenAI)</option> 
+        <option value="gpt-4.1-nano">GPT 4.1 Nano (OpenAI)</option> 
         <option value="gpt-4o-mini">GPT 4o Mini (OpenAI)</option>
+        <option value="gpt-4.1-mini">GPT 4.1 Mini (OpenAI)</option> 
+        <option value="gpt-5-mini">GPT 5 Mini (OpenAI)</option>
     </select>
     <button id="save-btn" onclick="saveChat()">SAVE</button>
 </header>
@@ -355,18 +368,16 @@
 
     let history = []; 
     let isGenerating = false;
-    let abortController = null; // 用來控制停止
+    let abortController = null;
 
     const chatBox = document.getElementById('chat-box');
     const input = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
 
-    // 處理 Enter 鍵
     input.addEventListener('keypress', (e) => { 
         if(e.key === 'Enter' && !isGenerating) sendMessage(); 
     });
 
-    // 處理按鈕點擊 (會根據狀態變換功能)
     function handleButtonClick() {
         if (isGenerating) {
             stopGeneration();
@@ -387,7 +398,7 @@
 
     function stopGeneration() {
         if (abortController) {
-            abortController.abort(); // 發送中斷訊號
+            abortController.abort(); 
             abortController = null;
         }
     }
@@ -410,14 +421,13 @@
         const text = input.value.trim();
         if (!text) return;
 
-        // 初始化狀態
         isGenerating = true;
-        abortController = new AbortController(); // 建立新的控制器
+        abortController = new AbortController(); 
         const signal = abortController.signal;
 
         input.value = '';
-        input.disabled = true; // 鎖定輸入
-        updateButtonState('loading'); // 按鈕變 STOP
+        input.disabled = true;
+        updateButtonState('loading');
         
         renderMsg('user', text);
         history.push({ role: 'user', content: text });
@@ -435,19 +445,29 @@
                     model: model,
                     messages: history
                 }),
-                signal: signal // 綁定中斷訊號
+                signal: signal
             });
 
-            if (response.status === 429) {
-                aiMsgDiv.innerHTML = '**[SYSTEM ALERT]** Rate limit exceeded (50/day).';
-                throw new Error("RateLimit");
+            // [修改重點] 錯誤處理邏輯
+            if (!response.ok) {
+                // 嘗試解析後端回傳的 JSON Error Message
+                let errorMessage = "Unknown Server Error";
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorData.message || errorMessage;
+                } catch (e) {
+                    // 如果不是 JSON，可能是一般文字
+                    errorMessage = response.statusText;
+                }
+                
+                // 拋出錯誤以跳轉到 catch block
+                throw new Error(`API_ERROR: ${errorMessage}`);
             }
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let queue = "";
             
-            // 打字機特效
             const typeLoop = setInterval(() => {
                 if (queue.length > 0) {
                     const char = queue[0];
@@ -472,7 +492,6 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
 
-            // 等待最後的 buffer 清空
             const checkDone = setInterval(() => {
                 if (queue.length === 0) {
                     clearInterval(typeLoop);
@@ -482,12 +501,25 @@
             }, 100);
 
         } catch (e) {
+            // [修改重點] 錯誤渲染
+            let displayMsg = "[CRITICAL FAILURE] Connection lost.";
+
             if (e.name === 'AbortError') {
-                aiMsgDiv.innerHTML += " <br/><span style='color:var(--alert-red)'>[CONNECTION TERMINATED]</span>";
-            } else if (e.message !== "RateLimit") {
-                aiMsgDiv.textContent = "[CRITICAL FAILURE] Connection lost.";
+                displayMsg = "[CONNECTION TERMINATED]";
+                aiMsgDiv.innerHTML += ` <br/><span style='color:var(--alert-red)'>${displayMsg}</span>`;
+            } 
+            else if (e.message && e.message.startsWith("API_ERROR: ")) {
+                // 抓取後端回傳的具體錯誤 (例如 Rate limit exceeded)
+                const msg = e.message.replace("API_ERROR: ", "");
+                displayMsg = `[SYSTEM ERROR] ${msg}`;
+                // 用紅色顯示錯誤
+                aiMsgDiv.innerHTML = `<span style="color: var(--alert-red); font-weight: bold;">${displayMsg}</span>`;
+            } 
+            else {
+                // 其他未知錯誤
+                aiMsgDiv.innerHTML = `<span style="color: var(--alert-red); font-weight: bold;">${displayMsg}</span>`;
             }
-            // 發生錯誤或中斷時，立即結束狀態
+
             isGenerating = false;
             input.disabled = false;
             updateButtonState('idle');
@@ -496,13 +528,12 @@
     }
 
     function finishGeneration(aiMsgDiv, fullReply) {
-        // 完成時的清理工作
         aiMsgDiv.innerHTML = marked.parse(fullReply);
         history.push({ role: 'assistant', content: fullReply });
         
         isGenerating = false;
         input.disabled = false;
-        updateButtonState('idle'); // 按鈕變回 SEND
+        updateButtonState('idle');
         input.focus();
         
         document.querySelectorAll('pre code').forEach((block) => {
