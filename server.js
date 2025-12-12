@@ -38,7 +38,9 @@ const MODEL_REGISTRY = {
     'minimax-m2': { provider: 'Ollama' },
     'gpt-5-nano': { provider: 'OpenAI' },
     'gpt-4o-mini': { provider: 'OpenAI' },
-    'gpt-4.1-nano': { provider: 'OpenAI' }
+    'gpt-4.1-nano': { provider: 'OpenAI' },
+    'gpt-5-mini': { provider: 'OpenAI' },
+    'gpt-4.1-mini': { provider: 'OpenAI' }
 };
 
 // --- FILE OPS (BUG FIXED HERE) ---
@@ -84,8 +86,8 @@ const checkRateLimit = (req, res, next) => {
         record = { date: today, count: 0 };
     }
     
-    if (record.count >= 50) {
-        return res.status(429).json({ error: "Rate limit exceeded (50/day)." });
+    if (record.count >= 30) {
+        return res.status(429).json({ error: "Rate limit exceeded (30/day)." });
     }
     
     record.count++;
@@ -204,7 +206,7 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                             text = json.message.content;
                         }
                     } 
-                    else if (config.provider === "OpenAI") {
+                    else if (config.provider === "OpenAI" || config.provider === "Zelfa") {
                         if (trimmed.startsWith('data: ')) {
                             const dataStr = trimmed.replace('data: ', '').trim();
                             if (dataStr !== '[DONE]') {
