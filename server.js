@@ -26,6 +26,8 @@ const API_KEYS = {
 // --- MODEL REGISTRY ---
 const MODEL_REGISTRY = {
     'gpt-oss:120b': { provider: 'Ollama' },
+    'devstral-2:123b': { provider: 'Ollama' },
+    'rnj-1:8b': { provider: 'Ollama' },
     'cogito-2.1:671b': { provider: 'Ollama' },
     'glm-4.6': { provider: 'Ollama' },
     'kimi-k2:1t': { provider: 'Ollama' },
