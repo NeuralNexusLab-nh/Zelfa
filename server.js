@@ -184,7 +184,8 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                 body: JSON.stringify({
                     model: model,
                     messages: recentMessages,
-                    stream: true 
+                    stream: true,
+                    service_tier: "flex"
                 })
             });
         }
