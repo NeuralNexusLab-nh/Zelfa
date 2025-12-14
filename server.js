@@ -41,8 +41,7 @@ const MODEL_REGISTRY = {
     'gpt-5-nano': { provider: 'OpenAI' },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
-    'gpt-5-mini': { provider: 'OpenAI' },
-    'gpt-4.1-mini': { provider: 'OpenAI' }
+    'gpt-5-mini': { provider: 'OpenAI' }
 };
 
 // --- FILE OPS (BUG FIXED HERE) ---
@@ -175,6 +174,13 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
 
         // --- OPENAI ---
         else if (config.provider === "OpenAI") {
+            var st;
+            if (model == "gpt-5-mini" || model == "gpt-5-nano") {
+                st = "flex";
+            } else {
+                st = "default";
+            }
+            
             apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
                 method: "POST",
                 headers: {
@@ -185,7 +191,7 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                     model: model,
                     messages: recentMessages,
                     stream: true,
-                    service_tier: "flex"
+                    service_tier: st
                 })
             });
         }
