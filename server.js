@@ -41,7 +41,8 @@ const MODEL_REGISTRY = {
     'gpt-5-nano': { provider: 'OpenAI' },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
-    'gpt-5-mini': { provider: 'OpenAI' }
+    'gpt-5-mini': { provider: 'OpenAI' },
+    'gpt-4o-mini-search-preview': { provider: 'OpenAI' }
 };
 
 // --- FILE OPS (BUG FIXED HERE) ---
@@ -191,7 +192,10 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                     model: model,
                     messages: recentMessages,
                     stream: true,
-                    service_tier: st
+                    service_tier: st,
+                    ...(model.includes("search") && {
+                        web_search_options: {}
+                    })
                 })
             });
         }
