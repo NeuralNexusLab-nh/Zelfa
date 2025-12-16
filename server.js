@@ -177,40 +177,44 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                     },
                     body: JSON.stringify({
                         model,
-                        messages: recentMessages,
-                        stream: true
+                        messages: recentMessages
                     })
                 }
             );
         }
+        
+        if (config.provider === "GitHub") {
+            let response = await apiRes;
+            res.send(response.choices[0].message.content);
+        } else {
 
-        let buffer = "";
+            let buffer = "";
 
-        for await (const chunk of apiRes.body) {
-            const lines = (buffer + chunk.toString()).split('\n');
-            buffer = lines.pop();
-
-            for (const line of lines) {
-                const trimmed = line.trim();
-                if (!trimmed) continue;
-
-                let text = "";
-
-                // --- OLLAMA ---
-                if (config.provider === "Ollama") {
-                    const json = JSON.parse(trimmed);
-                    text = json?.message?.content || "";
-                }
-
-                // --- OPENAI & GITHUB (SAME FORMAT) ---
-                else {
-                    if (trimmed.startsWith("data: ")) {
-                        const data = trimmed.replace("data: ", "").trim();
-                        if (data !== "[DONE]") {
-                            const json = JSON.parse(data);
-                            text = json.choices?.[0]?.delta?.content || "";
-                        }
+            for await (const chunk of apiRes.body) {
+                const lines = (buffer + chunk.toString()).split('\n');
+                buffer = lines.pop();
+        
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed) continue;
+    
+                    let text = "";
+    
+                    // --- OLLAMA ---
+                    if (config.provider === "Ollama") {
+                        const json = JSON.parse(trimmed);
+                        text = json?.message?.content || "";
                     }
+
+                    // --- OPENAI & GITHUB (SAME FORMAT) ---
+                    else {
+                        if (trimmed.startsWith("data: ")) {
+                            const data = trimmed.replace("data: ", "").trim();
+                            if (data !== "[DONE]") {
+                                const json = JSON.parse(data);
+                                text = json.choices?.[0]?.delta?.content || "";
+                            }
+                        }
                 }
 
                 if (text) res.write(text);
@@ -218,6 +222,7 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
         }
 
         res.end();
+        }
 
     } catch (e) {
         console.error("Stream error:", e);
