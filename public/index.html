@@ -1,302 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>ZELFA // TERMINAL</title>
-    <!-- Markdown Parser -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Highlight.js -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    
-    <style>
-        :root {
-            --bg: #050505;
-            --term-green: #00ff41;
-            --term-dim: #008F11;
-            --user-cyan: #0ff;
-            --alert-red: #ff3333;
-            --border: 1px solid #333;
-        }
-        
-        * { box-sizing: border-box; }
-
-        body {
-            background-color: var(--bg);
-            color: var(--term-green);
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            height: 100dvh; 
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* 關鍵：防止整個網頁出現捲軸 */
-        }
-
-        /* Scanline effect */
-        body::before {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 999;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
-        header {
-            padding: 10px 15px;
-            border-bottom: var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #000;
-            z-index: 1000;
-            flex-shrink: 0;
-            height: 50px;
-        }
-        
-        @media (max-width: 600px) {
-            header div { font-size: 0.8rem; }
-            #save-btn { padding: 5px 10px; font-size: 0.8rem; }
-            select { max-width: 100px; }
-        }
-
-        select {
-            background: #000;
-            color: var(--term-green);
-            border: 1px solid var(--term-green);
-            padding: 5px;
-            font-family: inherit;
-        }
-        #save-btn {
-            background: transparent;
-            color: var(--user-cyan);
-            border: 1px solid var(--user-cyan);
-            padding: 5px 15px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-        #save-btn:hover { background: var(--user-cyan); color: #000; }
-
-        #chat-box {
-            flex: 1; 
-            overflow-y: auto;
-            overflow-x: hidden; /* 禁止水平捲動 */
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            min-height: 0; /* Flexbox 溢出修復 */
-            width: 100%;
-        }
-
-        .msg {
-            max-width: 100%;
-            padding: 10px;
-            line-height: 1.5;
-            position: relative;
-            
-            /* 強制斷行，防止長字串撐爆 */
-            white-space: pre-wrap;       
-            word-wrap: break-word;       
-            overflow-wrap: anywhere;     
-            box-sizing: border-box;
-        }
-
-        .msg-user {
-            align-self: flex-end;
-            text-align: right;
-            border-right: 2px solid var(--user-cyan);
-            color: var(--user-cyan);
-            background: rgba(0, 255, 255, 0.05);
-            max-width: 90%; 
-        }
-
-        .msg-ai {
-            align-self: flex-start;
-            border-left: 2px solid var(--term-green);
-            color: #ddd; 
-            background: rgba(0, 255, 65, 0.05);
-            width: 100%; 
-            display: block; 
-            min-width: 0; 
-        }
-        
-        .msg-ai p { margin: 5px 0; }
-        .msg-ai strong { color: #fff; }
-        
-        /* Cursor Animation */
-        .typing-cursor::after {
-            content: '█';
-            animation: blink 1s step-end infinite;
-            color: var(--term-green);
-            margin-left: 5px;
-            display: inline-block;
-        }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* Code Block Fixes */
-        pre {
-            background: #1e1e1e;
-            border: 1px solid #444;
-            border-radius: 4px;
-            position: relative;
-            margin: 10px 0;
-            padding: 0;
-            
-            max-width: 100%; 
-            width: 100%;     
-            overflow-x: auto; 
-            white-space: pre; 
-        }
-        
-        .code-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #2d2d2d;
-            padding: 5px 10px;
-            border-bottom: 1px solid #444;
-            font-size: 0.8rem;
-            color: #aaa;
-            position: sticky;
-            left: 0;
-            top: 0;
-        }
-        
-        code { font-family: 'Consolas', monospace; }
-        pre code {
-            display: block;
-            padding: 10px;
-            color: #abb2bf;
-        }
-
-        .copy-btn {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            color: #aaa;
-            display: flex;
-            align-items: center;
-            transition: color 0.2s;
-        }
-        .copy-btn:hover { color: #fff; }
-        .copy-btn svg { width: 16px; height: 16px; }
-
-        #input-area {
-            border-top: var(--border);
-            padding: 15px;
-            display: flex;
-            gap: 10px;
-            background: #000;
-            z-index: 1000;
-            flex-shrink: 0;
-            min-height: 70px;
-            padding-bottom: env(safe-area-inset-bottom, 20px); 
-        }
-        
-        input[type="text"] {
-            flex: 1;
-            background: #111;
-            border: 1px solid #333;
-            color: var(--term-green);
-            padding: 12px;
-            font-family: inherit;
-            outline: none;
-            border-radius: 0;
-            -webkit-appearance: none;
-            font-size: 16px;
-            min-width: 0; 
-        }
-        
-        /* Button Styles */
-        button#send-btn {
-            background: var(--term-green);
-            color: #000;
-            border: 1px solid var(--term-green);
-            padding: 10px 20px;
-            cursor: pointer;
-            font-weight: bold;
-            white-space: nowrap;
-            min-width: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: 0.2s;
-        }
-
-        /* STOP Mode Style */
-        button#send-btn.stop-mode {
-            background: transparent;
-            color: var(--alert-red);
-            border-color: var(--alert-red);
-        }
-        button#send-btn.stop-mode:hover {
-            background: rgba(255, 51, 51, 0.1);
-        }
-
-        /* Spinner Animation */
-        .spinner {
-            width: 14px;
-            height: 14px;
-            border: 2px solid var(--alert-red);
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: inline-block;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Modal Styles */
-        #hacker-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            border: 2px solid var(--term-green);
-            background: #000;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 0 20px var(--term-green);
-        }
-        .modal-title { font-size: 1.5rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
-        .link-display {
-            background: #111;
-            border: 1px dashed var(--term-green);
-            padding: 10px;
-            color: #fff;
-            margin: 20px 0;
-            word-break: break-all;
-            user-select: all;
-            position: relative;
-        }
-        .copy-link-btn {
-            position: absolute; right: 5px; top: 5px;
-            background: var(--term-green); border:none; cursor: pointer;
-        }
-        .close-btn {
-            background: transparent; border: 1px solid var(--alert-red);
-            color: var(--alert-red); padding: 5px 20px; cursor: pointer; margin-top: 10px;
-        }
-        .close-btn:hover { background: var(--alert-red); color: white; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+<title>ZELFA // TERMINAL</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+:root {
+    --bg: #050505;
+    --term-green: #00ff41;
+    --term-dim: #008F11;
+    --user-cyan: #0ff;
+    --alert-red: #ff3333;
+    --border: 1px solid #333;
+}
+* { box-sizing: border-box; }
+body {
+    background-color: var(--bg);
+    color: var(--term-green);
+    font-family: 'Courier New', Courier, monospace;
+    margin: 0;
+    height: 100dvh; 
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+body::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 999;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+}
+header {
+    padding: 10px 15px;
+    border-bottom: var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #000;
+    z-index: 1000;
+    flex-shrink: 0;
+    height: 50px;
+}
+@media (max-width: 600px) {
+    header div { font-size: 0.8rem; }
+    #save-btn { padding: 5px 10px; font-size: 0.8rem; }
+    select { max-width: 100px; }
+}
+select {
+    background: #000;
+    color: var(--term-green);
+    border: 1px solid var(--term-green);
+    padding: 5px;
+    font-family: inherit;
+}
+#save-btn {
+    background: transparent;
+    color: var(--user-cyan);
+    border: 1px solid var(--user-cyan);
+    padding: 5px 15px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+#save-btn:hover { background: var(--user-cyan); color: #000; }
+#chat-box {
+    flex: 1; 
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 0;
+    width: 100%;
+}
+.msg {
+    max-width: 100%;
+    padding: 10px;
+    line-height: 1.5;
+    position: relative;
+    white-space: pre-wrap;       
+    word-wrap: break-word;       
+    overflow-wrap: anywhere;     
+    box-sizing: border-box;
+}
+.msg-user {
+    align-self: flex-end;
+    text-align: right;
+    border-right: 2px solid var(--user-cyan);
+    color: var(--user-cyan);
+    background: rgba(0, 255, 255, 0.05);
+    max-width: 90%; 
+}
+.msg-ai {
+    align-self: flex-start;
+    border-left: 2px solid var(--term-green);
+    color: #ddd; 
+    background: rgba(0, 255, 65, 0.05);
+    width: 100%; 
+    display: block; 
+    min-width: 0; 
+}
+.msg-ai p { margin: 5px 0; }
+.msg-ai strong { color: #fff; }
+.typing-cursor::after {
+    content: '█';
+    animation: blink 1s step-end infinite;
+    color: var(--term-green);
+    margin-left: 5px;
+    display: inline-block;
+}
+@keyframes blink { 50% { opacity: 0; } }
+pre {
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 4px;
+    position: relative;
+    margin: 10px 0;
+    padding: 0;
+    max-width: 100%; 
+    width: 100%;     
+    overflow-x: auto; 
+    white-space: pre; 
+}
+.code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #2d2d2d;
+    padding: 5px 10px;
+    border-bottom: 1px solid #444;
+    font-size: 0.8rem;
+    color: #aaa;
+    position: sticky;
+    left: 0;
+    top: 0;
+}
+code { font-family: 'Consolas', monospace; }
+pre code { display: block; padding: 10px; color: #abb2bf; }
+.copy-btn { background: transparent; border: none; cursor: pointer; color: #aaa; display: flex; align-items: center; transition: color 0.2s; }
+.copy-btn:hover { color: #fff; }
+.copy-btn svg { width: 16px; height: 16px; }
+#input-area {
+    border-top: var(--border);
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    background: #000;
+    z-index: 1000;
+    flex-shrink: 0;
+    min-height: 70px;
+    padding-bottom: env(safe-area-inset-bottom, 20px); 
+}
+input[type="text"] {
+    flex: 1;
+    background: #111;
+    border: 1px solid #333;
+    color: var(--term-green);
+    padding: 12px;
+    font-family: inherit;
+    outline: none;
+    border-radius: 0;
+    -webkit-appearance: none;
+    font-size: 16px;
+    min-width: 0; 
+}
+button#send-btn, button#delete-btn {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: bold;
+    min-width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+button#send-btn { background: var(--term-green); color: #000; border: 1px solid var(--term-green); }
+button#send-btn.stop-mode { background: transparent; color: var(--alert-red); border-color: var(--alert-red); }
+button#send-btn.stop-mode:hover { background: rgba(255, 51, 51, 0.1); }
+button#delete-btn { background: transparent; color: var(--alert-red); border: 1px solid var(--alert-red); }
+button#delete-btn:hover { background: var(--alert-red); color: #000; }
+.spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--alert-red);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#hacker-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+.modal-content { border: 2px solid var(--term-green); background: #000; padding: 30px; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 0 20px var(--term-green); }
+.modal-title { font-size: 1.5rem; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+.link-display { background: #111; border: 1px dashed var(--term-green); padding: 10px; color: #fff; margin: 20px 0; word-break: break-all; user-select: all; position: relative; }
+.copy-link-btn { position: absolute; right: 5px; top: 5px; background: var(--term-green); border:none; cursor: pointer; }
+.close-btn { background: transparent; border: 1px solid var(--alert-red); color: var(--alert-red); padding: 5px 20px; cursor: pointer; margin-top: 10px; }
+.close-btn:hover { background: var(--alert-red); color: white; }
+</style>
 </head>
 <body>
-
 <header>
     <div>ZELFA</div>
     <select id="model-select">
@@ -313,6 +224,10 @@
         <option value="kimi-k2:1t">Kimi K2 (Ollama)</option> 
         <option value="cogito-2.1:671b">Cogito 2.1 (Ollama)</option> 
         <option value="glm-4.6">GLM 4.6 (Ollama)</option> 
+        <option value="microsoft/Phi-4">Phi 4 (GitHub)</option>
+        <option value="microsoft/Phi-4-reasoning">Phi 4 Reasoning (GitHub)</option>
+        <option value="openai/gpt-4o-mini">GPT 4o Mini (GitHub)</option>
+        <option value="meta/Meta-Llama-3.1-8B-Instruct">Meta LLaMA 3.1 (GitHub)</option>
         <option value="gpt-4o-mini">✨ GPT 4o Mini (OpenAI)</option>
         <option value="gpt-4.1-nano">✨ GPT 4.1 Nano (OpenAI)</option> 
         <option value="gpt-5-nano">✨ GPT 5 Nano (OpenAI Flex)</option> 
@@ -320,270 +235,150 @@
         <option value="gpt-4o-mini-search-preview">🔍 GPT 4o Mini Search (OpenAI Web Search)</option>
     </select>
     <button id="save-btn" onclick="saveChat()">SAVE</button>
+    <button id="delete-btn" onclick="confirmDelete()">DELETE</button>
 </header>
-
-<div id="chat-box">
-    <div class="msg msg-ai">System ready. Ephemeral memory initialized.<br>All logs will be purged on refresh.</div>
-</div>
-
+<div id="chat-box"></div>
 <div id="input-area">
     <input type="text" id="user-input" placeholder="Execute command..." autocomplete="off">
     <button id="send-btn" onclick="handleButtonClick()">SEND</button>
 </div>
-
 <div id="hacker-modal">
     <div class="modal-content">
         <div class="modal-title">>> DATA EXPORTED <<</div>
         <p>Session archived on encrypted node.</p>
         <div class="link-display">
             <span id="link-text">...</span>
-            <button class="copy-link-btn" onclick="copyLinkDisplay()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            </button>
+            <button class="copy-link-btn" onclick="copyLinkDisplay()">Copy</button>
         </div>
         <div style="font-size:0.8em; color:#666;">Requires min. 2 cycles to generate.</div>
         <button class="close-btn" onclick="document.getElementById('hacker-modal').style.display='none'">CLOSE CONNECTION</button>
     </div>
 </div>
-
 <script>
-    // Config Marked.js
-    const renderer = new marked.Renderer();
-    renderer.code = function({ text, lang }) {
-        const validLang = !!(lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
-        const highlighted = hljs.highlight(text, { language: validLang }).value;
-        const copyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-        
-        return `
-            <div class="code-block">
-                <div class="code-header">
-                    <span class="lang">${validLang}</span>
-                    <button class="copy-btn" onclick="copyCode(this)">${copyIcon}</button>
-                </div>
-                <pre><code class="hljs language-${validLang}">${highlighted}</code></pre>
-                <div class="hidden-code" style="display:none;">${text}</div> 
-            </div>
-        `;
-    };
-    marked.use({ renderer });
+const renderer = new marked.Renderer();
+renderer.code = function({ text, lang }) {
+    const validLang = !!(lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
+    const highlighted = hljs.highlight(text, { language: validLang }).value;
+    const copyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+    return `<div class="code-block"><div class="code-header"><span class="lang">${validLang}</span><button class="copy-btn" onclick="copyCode(this)">${copyIcon}</button></div><pre><code class="hljs language-${validLang}">${highlighted}</code></pre><div class="hidden-code" style="display:none;">${text}</div></div>`;
+};
+marked.use({ renderer });
 
-    let history = []; 
-    let isGenerating = false;
-    let abortController = null;
+let history = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+const chatBox = document.getElementById('chat-box');
+const input = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
 
-    const chatBox = document.getElementById('chat-box');
-    const input = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
+function renderMsg(role, text) {
+    const div = document.createElement('div');
+    div.className = `msg msg-${role}`;
+    if(role==='ai'){ div.innerHTML='<span class="typing-cursor"></span>'; }
+    else { div.textContent = text; }
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return div;
+}
 
-    input.addEventListener('keypress', (e) => { 
-        if(e.key === 'Enter' && !isGenerating) sendMessage(); 
-    });
+function refreshChat() {
+    chatBox.innerHTML='';
+    history.forEach(m=>renderMsg(m.role,m.content));
+}
+refreshChat();
 
-    function handleButtonClick() {
-        if (isGenerating) {
-            stopGeneration();
-        } else {
-            sendMessage();
+input.addEventListener('keypress',(e)=>{ if(e.key==='Enter' && !isGenerating) sendMessage(); });
+let isGenerating=false;
+let abortController=null;
+
+function handleButtonClick(){ if(isGenerating) stopGeneration(); else sendMessage(); }
+function updateButtonState(state){
+    if(state==='loading'){ sendBtn.innerHTML=`STOP <div class="spinner"></div>`; sendBtn.className='stop-mode'; }
+    else { sendBtn.innerHTML='SEND'; sendBtn.className=''; }
+}
+function stopGeneration(){ if(abortController){ abortController.abort(); abortController=null; } }
+
+async function sendMessage() {
+    const text=input.value.trim();
+    if(!text) return;
+    isGenerating=true;
+    abortController=new AbortController();
+    const signal=abortController.signal;
+    input.value=''; input.disabled=true;
+    updateButtonState('loading');
+    renderMsg('user',text);
+    history.push({role:'user',content:text});
+    localStorage.setItem('chatHistory', JSON.stringify(history));
+    const aiMsgDiv=renderMsg('ai','');
+    const model=document.getElementById('model-select').value;
+    let fullReply="";
+    try{
+        const response=await fetch('/api/models',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({model,messages:history}),
+            signal
+        });
+        if(!response.ok){ 
+            let errorMessage="Unknown Server Error";
+            try{ const data=await response.json(); errorMessage=data.error||data.message||errorMessage; }catch{}
+            throw new Error(`API_ERROR: ${errorMessage}`);
         }
-    }
-
-    function updateButtonState(state) {
-        if (state === 'loading') {
-            sendBtn.innerHTML = `STOP <div class="spinner"></div>`;
-            sendBtn.className = 'stop-mode';
-        } else {
-            sendBtn.innerHTML = `SEND`;
-            sendBtn.className = '';
-        }
-    }
-
-    function stopGeneration() {
-        if (abortController) {
-            abortController.abort(); 
-            abortController = null;
-        }
-    }
-
-    function renderMsg(role, text) {
-        const div = document.createElement('div');
-        div.className = `msg msg-${role}`;
-        
-        if (role === 'ai') {
-            div.innerHTML = '<span class="typing-cursor"></span>';
-        } else {
-            div.textContent = text;
-        }
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
-        return div;
-    }
-
-    async function sendMessage() {
-        const text = input.value.trim();
-        if (!text) return;
-
-        isGenerating = true;
-        abortController = new AbortController(); 
-        const signal = abortController.signal;
-
-        input.value = '';
-        input.disabled = true;
-        updateButtonState('loading');
-        
-        renderMsg('user', text);
-        history.push({ role: 'user', content: text });
-
-        const aiMsgDiv = renderMsg('ai', '');
-        const model = document.getElementById('model-select').value;
-        
-        let fullReply = "";
-        
-        try {
-            const response = await fetch('/api/models', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: model,
-                    messages: history
-                }),
-                signal: signal
-            });
-
-            // [修改重點] 錯誤處理邏輯
-            if (!response.ok) {
-                // 嘗試解析後端回傳的 JSON Error Message
-                let errorMessage = "Unknown Server Error";
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.error || errorData.message || errorMessage;
-                } catch (e) {
-                    // 如果不是 JSON，可能是一般文字
-                    errorMessage = response.statusText;
-                }
-                
-                // 拋出錯誤以跳轉到 catch block
-                throw new Error(`API_ERROR: ${errorMessage}`);
+        const reader=response.body.getReader();
+        const decoder=new TextDecoder();
+        let queue="";
+        const typeLoop=setInterval(()=>{
+            if(queue.length>0){
+                const char=queue[0]; queue=queue.slice(1);
+                fullReply+=char;
+                aiMsgDiv.innerHTML=marked.parse(fullReply);
+                chatBox.scrollTop=chatBox.scrollHeight;
             }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let queue = "";
-            
-            const typeLoop = setInterval(() => {
-                if (queue.length > 0) {
-                    const char = queue[0];
-                    queue = queue.slice(1);
-                    fullReply += char;
-                    
-                    aiMsgDiv.innerHTML = marked.parse(fullReply) + '<span class="typing-cursor"></span>';
-                    
-                    aiMsgDiv.querySelectorAll('pre code').forEach((block) => {
-                       hljs.highlightElement(block);
-                    });
-
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                }
-            }, 5); 
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                const chunk = decoder.decode(value, { stream: true });
-                queue += chunk;
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
-
-            const checkDone = setInterval(() => {
-                if (queue.length === 0) {
-                    clearInterval(typeLoop);
-                    clearInterval(checkDone);
-                    finishGeneration(aiMsgDiv, fullReply);
-                }
-            }, 100);
-
-        } catch (e) {
-            // [修改重點] 錯誤渲染
-            let displayMsg = "[CRITICAL FAILURE] Connection lost.";
-
-            if (e.name === 'AbortError') {
-                displayMsg = "[CONNECTION TERMINATED]";
-                aiMsgDiv.innerHTML += ` <br/><span style='color:var(--alert-red)'>${displayMsg}</span>`;
-            } 
-            else if (e.message && e.message.startsWith("API_ERROR: ")) {
-                // 抓取後端回傳的具體錯誤 (例如 Rate limit exceeded)
-                const msg = e.message.replace("API_ERROR: ", "");
-                displayMsg = `[SYSTEM ERROR] ${msg}`;
-                // 用紅色顯示錯誤
-                aiMsgDiv.innerHTML = `<span style="color: var(--alert-red); font-weight: bold;">${displayMsg}</span>`;
-            } 
-            else {
-                // 其他未知錯誤
-                aiMsgDiv.innerHTML = `<span style="color: var(--alert-red); font-weight: bold;">${displayMsg}</span>`;
-            }
-
-            isGenerating = false;
-            input.disabled = false;
-            updateButtonState('idle');
-            input.focus();
+        },16);
+        while(true){
+            const {value,done}=await reader.read();
+            if(done) break;
+            queue+=decoder.decode(value,{stream:true});
         }
-    }
-
-    function finishGeneration(aiMsgDiv, fullReply) {
-        aiMsgDiv.innerHTML = marked.parse(fullReply);
-        history.push({ role: 'assistant', content: fullReply });
-        
-        isGenerating = false;
-        input.disabled = false;
-        updateButtonState('idle');
+        clearInterval(typeLoop);
+        aiMsgDiv.innerHTML=marked.parse(fullReply);
+        history.push({role:'ai',content:fullReply});
+        localStorage.setItem('chatHistory', JSON.stringify(history));
+    }catch(err){
+        console.error(err);
+        aiMsgDiv.textContent=`[ERROR] ${err.message}`;
+        history.push({role:'ai',content:`[ERROR] ${err.message}`});
+        localStorage.setItem('chatHistory', JSON.stringify(history));
+    }finally{
+        isGenerating=false;
+        input.disabled=false;
         input.focus();
-        
-        document.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block);
-        });
-        
-        chatBox.scrollTop = chatBox.scrollHeight;
+        updateButtonState('ready');
     }
+}
 
-    async function saveChat() {
-        const model = document.getElementById('model-select').value;
-        try {
-            const res = await fetch('/api/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ history, model })
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                document.getElementById('link-text').innerText = data.link;
-                document.getElementById('hacker-modal').style.display = 'flex';
-            } else {
-                alert(`[DENIED] ${data.error}`);
-            }
-        } catch (e) {
-            alert("Network Error");
-        }
-    }
+function copyCode(btn){
+    const code=btn.parentElement.nextElementSibling.nextElementSibling.textContent;
+    navigator.clipboard.writeText(code);
+}
 
-    function copyLinkDisplay() {
-        const text = document.getElementById('link-text').innerText;
-        navigator.clipboard.writeText(text);
-        const btn = document.querySelector('.copy-link-btn');
-        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-        setTimeout(() => {
-            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-        }, 2000);
-    }
+function saveChat(){
+    const data=JSON.stringify(history);
+    const blob=new Blob([data],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    document.getElementById('link-text').textContent=url;
+    document.getElementById('hacker-modal').style.display='flex';
+}
 
-    window.copyCode = function(btn) {
-        const container = btn.closest('.code-block');
-        const code = container.querySelector('.hidden-code').textContent;
-        navigator.clipboard.writeText(code).then(() => {
-            const originalIcon = btn.innerHTML;
-            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#00ff41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-            setTimeout(() => { btn.innerHTML = originalIcon; }, 2000);
-        });
+function copyLinkDisplay(){
+    const text=document.getElementById('link-text').textContent;
+    navigator.clipboard.writeText(text);
+}
+
+function confirmDelete(){
+    if(confirm("WARNING: This will DELETE all chat history permanently!")) {
+        history=[]; localStorage.removeItem('chatHistory');
+        chatBox.innerHTML='';
     }
+}
 </script>
 </body>
 </html>
