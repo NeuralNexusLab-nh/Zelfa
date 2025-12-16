@@ -168,7 +168,7 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
         // --- GITHUB MODELS ---
         else if (config.provider === "GitHub") {
             apiRes = await fetch(
-                "https://models.inference.ai.azure.com/chat/completions",
+                "https://models.github.ai/inference/chat/completions",
                 {
                     method: "POST",
                     headers: {
