@@ -38,6 +38,8 @@ const MODEL_REGISTRY = {
     'gemini-3-pro-preview': { provider: 'Ollama' },
     'ministral-3:14b': { provider: 'Ollama' },
     'minimax-m2': { provider: 'Ollama' },
+    'gemini-3-flash-preview': { provider: 'Ollama' },
+    'nemotron-3-nano:30b': { provider: 'Ollama' },
     'gpt-5-nano': { provider: 'OpenAI' },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
