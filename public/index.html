@@ -321,11 +321,11 @@
         <option value="gpt-5-mini">✨ GPT 5 Mini (OpenAI Flex)</option>
         <option value="gpt-4o-mini-search-preview">🔍 GPT 4o Mini Search (OpenAI Web Search)</option>
     </select>
+    <button id="delete-btn" onclick="deleteHistory()" style="background: transparent; color: var(--alert-red); border: 1px solid var(--alert-red); padding: 5px 15px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-right: 10px;">DELETE</button>
     <button id="save-btn" onclick="saveChat()">SAVE</button>
 </header>
 
 <div id="chat-box">
-    <div class="msg msg-ai">System ready. Ephemeral memory initialized.<br>All logs will be purged on refresh.</div>
 </div>
 
 <div id="input-area">
@@ -369,9 +369,46 @@
     };
     marked.use({ renderer });
 
-    let history = []; 
+    let history = JSON.parse(localStorage.getItem('chatHistory')) || []; 
     let isGenerating = false;
     let abortController = null;
+    let stopRequested = false; // 追蹤是否已按下停止按鈕
+    
+    // 載入歷史記錄到畫面
+    function loadHistoryFromStorage() {
+        const savedHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+        savedHistory.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = `msg msg-${msg.role}`;
+            if (msg.role === 'ai') {
+                div.innerHTML = marked.parse(msg.content);
+            } else {
+                div.textContent = msg.content;
+            }
+            chatBox.appendChild(div);
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    
+    // 保存歷史記錄到 localStorage
+    function saveHistoryToStorage() {
+        localStorage.setItem('chatHistory', JSON.stringify(history));
+    }
+    
+    // 刪除儲存的歷史記錄
+    function deleteHistory() {
+        localStorage.removeItem('chatHistory');
+        history = [];
+        chatBox.innerHTML = '';
+        chatBox.appendChild(createSystemMessage('All logs purged from storage.'));
+    }
+    
+    function createSystemMessage(text) {
+        const div = document.createElement('div');
+        div.className = 'msg msg-ai';
+        div.innerHTML = marked.parse(text);
+        return div;
+    }
 
     const chatBox = document.getElementById('chat-box');
     const input = document.getElementById('user-input');
@@ -404,6 +441,7 @@
             abortController.abort(); 
             abortController = null;
         }
+        stopRequested = true; // 設置停止請求標誌
     }
 
     function renderMsg(role, text) {
@@ -533,8 +571,10 @@
     function finishGeneration(aiMsgDiv, fullReply) {
         aiMsgDiv.innerHTML = marked.parse(fullReply);
         history.push({ role: 'assistant', content: fullReply });
+        saveHistoryToStorage(); // 保存到 localStorage
         
         isGenerating = false;
+        stopRequested = false; // 重置停止請求狀態
         input.disabled = false;
         updateButtonState('idle');
         input.focus();
@@ -586,6 +626,11 @@
             setTimeout(() => { btn.innerHTML = originalIcon; }, 2000);
         });
     }
+    
+    // 頁面加載完成後載入歷史記錄
+    document.addEventListener('DOMContentLoaded', function() {
+        loadHistoryFromStorage();
+    });
 </script>
 </body>
 </html>
