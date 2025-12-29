@@ -29,13 +29,12 @@ const MODEL_REGISTRY = {
     'devstral-2:123b': { provider: 'Ollama' },
     'rnj-1:8b': { provider: 'Ollama' },
     'cogito-2.1:671b': { provider: 'Ollama' },
-    'glm-4.6': { provider: 'Ollama' },
+    'glm-4.7': { provider: 'Ollama' },
     'kimi-k2:1t': { provider: 'Ollama' },
     'qwen3-vl:235b': { provider: 'Ollama' },
     'qwen3-coder:480b': { provider: 'Ollama' },
     'deepseek-v3.2': { provider: 'Ollama' },
     'gemma3:27b': { provider: 'Ollama' },
-    'gemini-3-pro-preview': { provider: 'Ollama' },
     'ministral-3:14b': { provider: 'Ollama' },
     'minimax-m2': { provider: 'Ollama' },
     'gemini-3-flash-preview': { provider: 'Ollama' },
@@ -43,8 +42,7 @@ const MODEL_REGISTRY = {
     'gpt-5-nano': { provider: 'OpenAI' },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
-    'gpt-5-mini': { provider: 'OpenAI' },
-    'gpt-4o-mini-search-preview': { provider: 'OpenAI' }
+    'gpt-5-mini': { provider: 'OpenAI' }
 };
 
 // --- FILE OPS (BUG FIXED HERE) ---
