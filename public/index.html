@@ -338,7 +338,7 @@
         <option value="gpt-5-mini">✨ GPT 5 Mini (OpenAI Flex)</option>
     </select>
     <button id="delete-btn" onclick="deleteHistory()" style="background: transparent; color: var(--alert-red); border: 1px solid var(--alert-red); padding: 5px 15px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-right: 10px;">DELETE</button>
-    <button id="save-btn" onclick="saveChat()">SAVE</button>
+    <button id="save-btn" onclick="saveChat()">PUBLIC & SHARE</button>
 </header>
 
 <div id="chat-box">
@@ -540,7 +540,7 @@
 
                     chatBox.scrollTop = chatBox.scrollHeight;
                 }
-            }, 5); 
+            }, 0.001); 
 
             while (true) {
                 const { done, value } = await reader.read();
