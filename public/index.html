@@ -34,7 +34,6 @@
             overflow: hidden; 
         }
 
-        /* Scanline effect */
         body::before {
             content: " ";
             display: block;
@@ -128,7 +127,6 @@
         .msg-ai strong { color: #fff; }
         .msg-ai h1, .msg-ai h2, .msg-ai h3 { color: #fff; margin: 10px 0; border-bottom: 1px solid #444; }
         
-        /* 表格樣式 (White Borders) */
         table {
             border-collapse: collapse;
             width: 100%;
@@ -145,7 +143,6 @@
             color: var(--term-green);
         }
 
-        /* Cursor Animation */
         .typing-cursor::after {
             content: '█';
             animation: blink 1s step-end infinite;
@@ -155,7 +152,6 @@
         }
         @keyframes blink { 50% { opacity: 0; } }
 
-        /* Code Block 無縫接合 */
         .code-block {
             margin: 10px 0;
             border: 1px solid #444;
@@ -231,7 +227,6 @@
             min-width: 0; 
         }
         
-        /* Button Styles */
         button#send-btn {
             background: var(--term-green);
             color: #000;
@@ -248,7 +243,6 @@
             transition: 0.2s;
         }
 
-        /* STOP Mode Style */
         button#send-btn.stop-mode {
             background: transparent;
             color: var(--alert-red);
@@ -258,7 +252,6 @@
             background: rgba(255, 51, 51, 0.1);
         }
 
-        /* Spinner Animation */
         .spinner {
             width: 14px;
             height: 14px;
@@ -272,7 +265,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Modal Styles */
         #hacker-modal {
             display: none;
             position: fixed;
@@ -341,8 +333,7 @@
     <button id="save-btn" onclick="saveChat()">PUBLIC & SHARE</button>
 </header>
 
-<div id="chat-box">
-</div>
+<div id="chat-box"></div>
 
 <div id="input-area">
     <input type="text" id="user-input" placeholder="Execute command..." autocomplete="off">
@@ -365,7 +356,9 @@
 </div>
 
 <script>
+    // 1. 轉義 HTML 符號的輔助函數
     function escapeHTML(str) {
+      if (!str) return "";
       return str.replace(/[&<>"']/g, function(m) {
           return {
               '&': '&amp;',
@@ -375,7 +368,8 @@
               "'": '&#39;'
           }[m];
       });
-    } 
+    }
+
     // Config Marked.js
     const renderer = new marked.Renderer();
     renderer.code = function({ text, lang }) {
@@ -400,8 +394,11 @@
     let isGenerating = false;
     let abortController = null;
     let stopRequested = false;
+
+    const chatBox = document.getElementById('chat-box');
+    const input = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
     
-    // [修復重點] 正確渲染歷史紀錄
     function loadHistoryFromStorage() {
       const savedHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
       savedHistory.forEach(msg => {
@@ -410,14 +407,13 @@
           div.className = `msg msg-${roleClass}`;
           
           if (roleClass === 'ai') {
-              // 對歷史紀錄進行轉義處理後再餵給 marked
+              // 歷史記錄顯示時也確保符號轉義
               const safeContent = msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
               div.innerHTML = marked.parse(safeContent);
               div.querySelectorAll('pre code').forEach((block) => {
                   hljs.highlightElement(block);
               });
           } else {
-              // 使用者訊息建議也過濾一次
              div.textContent = msg.content; 
           }
           chatBox.appendChild(div);
@@ -442,10 +438,6 @@
         div.innerHTML = marked.parse(text);
         return div;
     }
-
-    const chatBox = document.getElementById('chat-box');
-    const input = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
 
     input.addEventListener('keypress', (e) => { 
         if(e.key === 'Enter' && !isGenerating) sendMessage(); 
@@ -492,8 +484,10 @@
     }
 
     async function sendMessage() {
-        const text = input.value.trim();
-        if (!text) return;
+        const rawText = input.value.trim(); // 取得原始文字
+        if (!rawText) return;
+
+        // 修復重點：正確轉義並定義變數
         const text = escapeHTML(rawText); 
 
         isGenerating = true;
@@ -540,22 +534,21 @@
             
             const typeLoop = setInterval(() => {
                 for (let i = 0; i < 70; i++) {
-                if (queue.length > 0) {
-                  const char = queue[0];
-                  queue = queue.slice(1);
-              
-                  fullReply += char;
-                  const safeContent = fullReply.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                
-                    aiMsgDiv.innerHTML = marked.parse(safeContent) + '<span class="typing-cursor"></span>';
-                
-                    aiMsgDiv.querySelectorAll('pre code').forEach((block) => {
-                      hljs.highlightElement(block);
-                  });
-  
-                  chatBox.scrollTop = chatBox.scrollHeight;
+                    if (queue.length > 0) {
+                        const char = queue[0];
+                        queue = queue.slice(1);
+                        fullReply += char;
+                        
+                        // 渲染時轉義 < 和 >
+                        const safeContent = fullReply.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        aiMsgDiv.innerHTML = marked.parse(safeContent) + '<span class="typing-cursor"></span>';
+                        
+                        aiMsgDiv.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
                 }
-              }
             }, 1);
 
             while (true) {
@@ -563,7 +556,6 @@
                 if (done) break;
                 const chunk = decoder.decode(value, { stream: true });
                 queue += chunk;
-                chatBox.scrollTop = chatBox.scrollHeight;
             }
 
             const checkDone = setInterval(() => {
@@ -576,20 +568,15 @@
 
         } catch (e) {
             let displayMsg = "[CRITICAL FAILURE] Connection lost.";
-
             if (e.name === 'AbortError') {
                 displayMsg = "[CONNECTION TERMINATED]";
                 aiMsgDiv.innerHTML += ` <br/><span style='color:var(--alert-red)'>${displayMsg}</span>`;
-            } 
-            else if (e.message && e.message.startsWith("API_ERROR: ")) {
-                const msg = e.message.replace("API_ERROR: ", "");
-                displayMsg = `[SYSTEM ERROR] ${msg}`;
+            } else if (e.message && e.message.startsWith("API_ERROR: ")) {
+                displayMsg = `[SYSTEM ERROR] ${e.message.replace("API_ERROR: ", "")}`;
                 aiMsgDiv.innerHTML = `<span style="color: var(--alert-red); font-weight: bold;">${displayMsg}</span>`;
-            } 
-            else {
+            } else {
                 aiMsgDiv.innerHTML = `<span style="color: var(--alert-red); font-weight: bold;">${displayMsg}</span>`;
             }
-
             isGenerating = false;
             input.disabled = false;
             updateButtonState('idle');
@@ -598,7 +585,8 @@
     }
 
     function finishGeneration(aiMsgDiv, fullReply) {
-        aiMsgDiv.innerHTML = marked.parse(fullReply);
+        const safeContent = fullReply.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        aiMsgDiv.innerHTML = marked.parse(safeContent);
         history.push({ role: 'assistant', content: fullReply });
         saveHistoryToStorage();
         
@@ -608,10 +596,9 @@
         updateButtonState('idle');
         input.focus();
         
-        document.querySelectorAll('pre code').forEach((block) => {
+        aiMsgDiv.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightElement(block);
         });
-        
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
@@ -624,7 +611,6 @@
                 body: JSON.stringify({ history, model })
             });
             const data = await res.json();
-            
             if (res.ok) {
                 document.getElementById('link-text').innerText = data.link;
                 document.getElementById('hacker-modal').style.display = 'flex';
@@ -656,7 +642,6 @@
         });
     }
     
-    // 頁面加載完成後載入歷史記錄
     document.addEventListener('DOMContentLoaded', function() {
         loadHistoryFromStorage();
     });
