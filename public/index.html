@@ -31,7 +31,7 @@
             width: 100vw;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* 關鍵：防止整個網頁出現捲軸 */
+            overflow: hidden; 
         }
 
         /* Scanline effect */
@@ -85,12 +85,12 @@
         #chat-box {
             flex: 1; 
             overflow-y: auto;
-            overflow-x: hidden; /* 禁止水平捲動 */
+            overflow-x: hidden; 
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            min-height: 0; /* Flexbox 溢出修復 */
+            min-height: 0; 
             width: 100%;
         }
 
@@ -99,8 +99,6 @@
             padding: 10px;
             line-height: 1.5;
             position: relative;
-            
-            /* 強制斷行，防止長字串撐爆 */
             white-space: pre-wrap;       
             word-wrap: break-word;       
             overflow-wrap: anywhere;     
@@ -129,6 +127,23 @@
         .msg-ai p { margin: 5px 0; }
         .msg-ai strong { color: #fff; }
         
+        /* [修復 2] 表格樣式 (White Borders) */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+            color: #ddd;
+        }
+        th, td {
+            border: 1px solid #fff; /* 白色格線 */
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #222;
+            color: var(--term-green);
+        }
+
         /* Cursor Animation */
         .typing-cursor::after {
             content: '█';
@@ -139,33 +154,36 @@
         }
         @keyframes blink { 50% { opacity: 0; } }
 
-        /* Code Block Fixes */
-        pre {
-            background: #1e1e1e;
+        /* [修復 3] Code Block 無縫接合 */
+        .code-block {
+            margin: 10px 0;
             border: 1px solid #444;
             border-radius: 4px;
-            position: relative;
-            margin: 10px 0;
-            padding: 0;
-            
-            max-width: 100%; 
-            width: 100%;     
-            overflow-x: auto; 
-            white-space: pre; 
+            overflow: hidden; /* 確保圓角 */
+            display: flex;
+            flex-direction: column; /* 垂直排列消除間隙 */
         }
-        
+
         .code-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: #2d2d2d;
             padding: 5px 10px;
-            border-bottom: 1px solid #444;
             font-size: 0.8rem;
             color: #aaa;
-            position: sticky;
-            left: 0;
-            top: 0;
+            /* 移除 border-bottom，改用背景色區分 */
+            border-bottom: 1px solid #444; 
+        }
+        
+        pre {
+            background: #1e1e1e;
+            margin: 0; /* 移除預設邊距 */
+            padding: 0;
+            width: 100%;     
+            overflow-x: auto; 
+            white-space: pre; 
+            border: none; /* 移除原本的 border，改由 .code-block 控制 */
         }
         
         code { font-family: 'Consolas', monospace; }
@@ -354,6 +372,7 @@
         const highlighted = hljs.highlight(text, { language: validLang }).value;
         const copyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
         
+        // [修復 3] 改用 div.code-block 包裹，消除間隙
         return `
             <div class="code-block">
                 <div class="code-header">
@@ -370,16 +389,21 @@
     let history = JSON.parse(localStorage.getItem('chatHistory')) || []; 
     let isGenerating = false;
     let abortController = null;
-    let stopRequested = false; // 追蹤是否已按下停止按鈕
+    let stopRequested = false;
     
-    // 載入歷史記錄到畫面
+    // [修復 1] 載入歷史記錄時解析 Markdown 並高亮代碼
     function loadHistoryFromStorage() {
         const savedHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
         savedHistory.forEach(msg => {
             const div = document.createElement('div');
             div.className = `msg msg-${msg.role}`;
             if (msg.role === 'ai') {
+                // 原本就有 parse，但需要高亮
                 div.innerHTML = marked.parse(msg.content);
+                // 重新觸發高亮
+                div.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
             } else {
                 div.textContent = msg.content;
             }
@@ -388,12 +412,10 @@
         chatBox.scrollTop = chatBox.scrollHeight;
     }
     
-    // 保存歷史記錄到 localStorage
     function saveHistoryToStorage() {
         localStorage.setItem('chatHistory', JSON.stringify(history));
     }
     
-    // 刪除儲存的歷史記錄
     function deleteHistory() {
         localStorage.removeItem('chatHistory');
         history = [];
@@ -439,7 +461,7 @@
             abortController.abort(); 
             abortController = null;
         }
-        stopRequested = true; // 設置停止請求標誌
+        stopRequested = true;
     }
 
     function renderMsg(role, text) {
@@ -487,19 +509,14 @@
                 signal: signal
             });
 
-            // [修改重點] 錯誤處理邏輯
             if (!response.ok) {
-                // 嘗試解析後端回傳的 JSON Error Message
                 let errorMessage = "Unknown Server Error";
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.error || errorData.message || errorMessage;
                 } catch (e) {
-                    // 如果不是 JSON，可能是一般文字
                     errorMessage = response.statusText;
                 }
-                
-                // 拋出錯誤以跳轉到 catch block
                 throw new Error(`API_ERROR: ${errorMessage}`);
             }
 
@@ -540,7 +557,6 @@
             }, 100);
 
         } catch (e) {
-            // [修改重點] 錯誤渲染
             let displayMsg = "[CRITICAL FAILURE] Connection lost.";
 
             if (e.name === 'AbortError') {
@@ -548,14 +564,11 @@
                 aiMsgDiv.innerHTML += ` <br/><span style='color:var(--alert-red)'>${displayMsg}</span>`;
             } 
             else if (e.message && e.message.startsWith("API_ERROR: ")) {
-                // 抓取後端回傳的具體錯誤 (例如 Rate limit exceeded)
                 const msg = e.message.replace("API_ERROR: ", "");
                 displayMsg = `[SYSTEM ERROR] ${msg}`;
-                // 用紅色顯示錯誤
                 aiMsgDiv.innerHTML = `<span style="color: var(--alert-red); font-weight: bold;">${displayMsg}</span>`;
             } 
             else {
-                // 其他未知錯誤
                 aiMsgDiv.innerHTML = `<span style="color: var(--alert-red); font-weight: bold;">${displayMsg}</span>`;
             }
 
@@ -569,10 +582,10 @@
     function finishGeneration(aiMsgDiv, fullReply) {
         aiMsgDiv.innerHTML = marked.parse(fullReply);
         history.push({ role: 'assistant', content: fullReply });
-        saveHistoryToStorage(); // 保存到 localStorage
+        saveHistoryToStorage();
         
         isGenerating = false;
-        stopRequested = false; // 重置停止請求狀態
+        stopRequested = false;
         input.disabled = false;
         updateButtonState('idle');
         input.focus();
