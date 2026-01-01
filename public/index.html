@@ -528,19 +528,21 @@
             
             const typeLoop = setInterval(() => {
                 if (queue.length > 0) {
-                    const char = queue[0];
-                    queue = queue.slice(1);
-                    fullReply += char;
-                    
-                    aiMsgDiv.innerHTML = marked.parse(fullReply) + '<span class="typing-cursor"></span>';
-                    
-                    aiMsgDiv.querySelectorAll('pre code').forEach((block) => {
-                       hljs.highlightElement(block);
-                    });
-
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                }
-            }, 0.001); 
+                    for (let i = 0; i < 20; i++) {
+                      const char = queue[0];
+                      queue = queue.slice(1);
+                      fullReply += char;
+                      
+                      aiMsgDiv.innerHTML = marked.parse(fullReply) + '<span class="typing-cursor"></span>';
+                      
+                      aiMsgDiv.querySelectorAll('pre code').forEach((block) => {
+                         hljs.highlightElement(block);
+                      });
+  
+                      chatBox.scrollTop = chatBox.scrollHeight;
+                    }
+                  }
+            }, 2); 
 
             while (true) {
                 const { done, value } = await reader.read();
