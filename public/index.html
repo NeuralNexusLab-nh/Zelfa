@@ -126,8 +126,9 @@
         
         .msg-ai p { margin: 5px 0; }
         .msg-ai strong { color: #fff; }
+        .msg-ai h1, .msg-ai h2, .msg-ai h3 { color: #fff; margin: 10px 0; border-bottom: 1px solid #444; }
         
-        /* [修復 2] 表格樣式 (White Borders) */
+        /* 表格樣式 (White Borders) */
         table {
             border-collapse: collapse;
             width: 100%;
@@ -135,7 +136,7 @@
             color: #ddd;
         }
         th, td {
-            border: 1px solid #fff; /* 白色格線 */
+            border: 1px solid #fff; 
             padding: 8px;
             text-align: left;
         }
@@ -154,14 +155,14 @@
         }
         @keyframes blink { 50% { opacity: 0; } }
 
-        /* [修復 3] Code Block 無縫接合 */
+        /* Code Block 無縫接合 */
         .code-block {
             margin: 10px 0;
             border: 1px solid #444;
             border-radius: 4px;
-            overflow: hidden; /* 確保圓角 */
+            overflow: hidden; 
             display: flex;
-            flex-direction: column; /* 垂直排列消除間隙 */
+            flex-direction: column; 
         }
 
         .code-header {
@@ -172,18 +173,17 @@
             padding: 5px 10px;
             font-size: 0.8rem;
             color: #aaa;
-            /* 移除 border-bottom，改用背景色區分 */
             border-bottom: 1px solid #444; 
         }
         
         pre {
             background: #1e1e1e;
-            margin: 0; /* 移除預設邊距 */
+            margin: 0; 
             padding: 0;
             width: 100%;     
             overflow-x: auto; 
             white-space: pre; 
-            border: none; /* 移除原本的 border，改由 .code-block 控制 */
+            border: none; 
         }
         
         code { font-family: 'Consolas', monospace; }
@@ -372,7 +372,6 @@
         const highlighted = hljs.highlight(text, { language: validLang }).value;
         const copyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
         
-        // [修復 3] 改用 div.code-block 包裹，消除間隙
         return `
             <div class="code-block">
                 <div class="code-header">
@@ -391,16 +390,19 @@
     let abortController = null;
     let stopRequested = false;
     
-    // [修復 1] 載入歷史記錄時解析 Markdown 並高亮代碼
+    // [修復重點] 正確渲染歷史紀錄
     function loadHistoryFromStorage() {
         const savedHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
         savedHistory.forEach(msg => {
             const div = document.createElement('div');
-            div.className = `msg msg-${msg.role}`;
-            if (msg.role === 'ai') {
-                // 原本就有 parse，但需要高亮
+            // 確保 class 映射正確
+            const roleClass = (msg.role === 'assistant' || msg.role === 'ai') ? 'ai' : 'user';
+            div.className = `msg msg-${roleClass}`;
+            
+            // 如果是 AI 回覆 (role: assistant)，進行 Markdown 解析
+            if (roleClass === 'ai') {
                 div.innerHTML = marked.parse(msg.content);
-                // 重新觸發高亮
+                // 重新高亮程式碼
                 div.querySelectorAll('pre code').forEach((block) => {
                     hljs.highlightElement(block);
                 });
