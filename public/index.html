@@ -527,7 +527,7 @@
             let queue = "";
             
             const typeLoop = setInterval(() => {
-                for (let i = 0; i < 30; i++) {
+                for (let i = 0; i < 70; i++) {
                   if (queue.length > 0) {
                       const char = queue[0];
                       queue = queue.slice(1);
@@ -542,7 +542,7 @@
                       chatBox.scrollTop = chatBox.scrollHeight;
                   }
                 }
-            }, 2); 
+            }, 1); 
 
             while (true) {
                 const { done, value } = await reader.read();
