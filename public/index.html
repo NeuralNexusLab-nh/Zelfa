@@ -365,6 +365,17 @@
 </div>
 
 <script>
+    function escapeHTML(str) {
+      return str.replace(/[&<>"']/g, function(m) {
+          return {
+              '&': '&amp;',
+              '<': '&lt;',
+              '>': '&gt;',
+              '"': '&quot;',
+              "'": '&#39;'
+          }[m];
+      });
+    } 
     // Config Marked.js
     const renderer = new marked.Renderer();
     renderer.code = function({ text, lang }) {
@@ -392,26 +403,26 @@
     
     // [修復重點] 正確渲染歷史紀錄
     function loadHistoryFromStorage() {
-        const savedHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
-        savedHistory.forEach(msg => {
-            const div = document.createElement('div');
-            // 確保 class 映射正確
-            const roleClass = (msg.role === 'assistant' || msg.role === 'ai') ? 'ai' : 'user';
-            div.className = `msg msg-${roleClass}`;
-            
-            // 如果是 AI 回覆 (role: assistant)，進行 Markdown 解析
-            if (roleClass === 'ai') {
-                div.innerHTML = marked.parse(msg.content);
-                // 重新高亮程式碼
-                div.querySelectorAll('pre code').forEach((block) => {
-                    hljs.highlightElement(block);
-                });
-            } else {
-                div.textContent = msg.content;
-            }
-            chatBox.appendChild(div);
-        });
-        chatBox.scrollTop = chatBox.scrollHeight;
+      const savedHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+      savedHistory.forEach(msg => {
+          const div = document.createElement('div');
+          const roleClass = (msg.role === 'assistant' || msg.role === 'ai') ? 'ai' : 'user';
+          div.className = `msg msg-${roleClass}`;
+          
+          if (roleClass === 'ai') {
+              // 對歷史紀錄進行轉義處理後再餵給 marked
+              const safeContent = msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              div.innerHTML = marked.parse(safeContent);
+              div.querySelectorAll('pre code').forEach((block) => {
+                  hljs.highlightElement(block);
+              });
+          } else {
+              // 使用者訊息建議也過濾一次
+             div.textContent = msg.content; 
+          }
+          chatBox.appendChild(div);
+      });
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
     
     function saveHistoryToStorage() {
@@ -483,6 +494,7 @@
     async function sendMessage() {
         const text = input.value.trim();
         if (!text) return;
+        const text = escapeHTML(rawText); 
 
         isGenerating = true;
         abortController = new AbortController(); 
@@ -528,21 +540,23 @@
             
             const typeLoop = setInterval(() => {
                 for (let i = 0; i < 70; i++) {
-                  if (queue.length > 0) {
-                      const char = queue[0];
-                      queue = queue.slice(1);
-                      fullReply += char;
-                      
-                      aiMsgDiv.innerHTML = marked.parse(fullReply) + '<span class="typing-cursor"></span>';
-                      
-                      aiMsgDiv.querySelectorAll('pre code').forEach((block) => {
-                         hljs.highlightElement(block);
-                      });
+                if (queue.length > 0) {
+                  const char = queue[0];
+                  queue = queue.slice(1);
+              
+                  fullReply += char;
+                  const safeContent = fullReply.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                
+                    aiMsgDiv.innerHTML = marked.parse(safeContent) + '<span class="typing-cursor"></span>';
+                
+                    aiMsgDiv.querySelectorAll('pre code').forEach((block) => {
+                      hljs.highlightElement(block);
+                  });
   
-                      chatBox.scrollTop = chatBox.scrollHeight;
-                  }
+                  chatBox.scrollTop = chatBox.scrollHeight;
                 }
-            }, 1); 
+              }
+            }, 1);
 
             while (true) {
                 const { done, value } = await reader.read();
