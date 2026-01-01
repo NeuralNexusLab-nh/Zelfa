@@ -527,8 +527,8 @@
             let queue = "";
             
             const typeLoop = setInterval(() => {
-                if (queue.length > 0) {
-                    for (let i = 0; i < 20; i++) {
+                for (let i = 0; i < 30; i++) {
+                  if (queue.length > 0) {
                       const char = queue[0];
                       queue = queue.slice(1);
                       fullReply += char;
@@ -540,8 +540,8 @@
                       });
   
                       chatBox.scrollTop = chatBox.scrollHeight;
-                    }
                   }
+                }
             }, 2); 
 
             while (true) {
