@@ -100,45 +100,6 @@ const checkRateLimit = (req, res, next) => {
 // --- ROUTES ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-app.get('/chat/:id', (req, res) => {
-    const savedData = JSON.parse(fs.readFileSync(SAVED_CHATS_FILE));
-    if (!savedData[req.params.id]) {
-        return res.status(404).send("404 // LOG NOT FOUND");
-    }
-    res.sendFile(path.join(__dirname, 'public', 'view.html'));
-});
-
-app.get('/api/saved/:id', (req, res) => {
-    const savedData = JSON.parse(fs.readFileSync(SAVED_CHATS_FILE));
-    const chat = savedData[req.params.id];
-    if (chat) res.json(chat);
-    else res.status(404).json({ error: "Not found" });
-});
-
-app.post('/api/save', async (req, res) => {
-    const { history, model } = req.body;
-    if (!history || history.length < 2) {
-        return res.status(400).json({ error: "Insufficient data to save." });
-    }
-    
-    const chatId = uuidv4();
-    const savedData = JSON.parse(fs.readFileSync(SAVED_CHATS_FILE));
-    
-    savedData[chatId] = {
-        timestamp: new Date().toISOString(),
-        model: model,
-        history: history
-    };
-    
-    fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify(savedData, null, 2));
-
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-    const host = req.get('host');
-    const dynamicLink = `${protocol}://${host}/chat/${chatId}`;
-
-    res.json({ link: dynamicLink, id: chatId });
-});
-
 // --- STREAMING INFERENCE API ---
 app.post('/api/models', checkRateLimit, async (req, res) => {
     var { model, messages } = req.body;
@@ -242,6 +203,18 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
         res.write("\n[System Error: Connection interrupted]");
         res.end();
     }
+});
+
+app.get("/robots.txt", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "robots.txt"));
+});
+
+app.get("/Robots.txt", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "robots.txt"));
+});
+
+app.get("/robot.txt", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "robots.txt"));
 });
 
 app.all("*", (req, res) => {
