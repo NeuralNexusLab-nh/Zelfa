@@ -28,205 +28,94 @@
             color: var(--term-green);
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
-            height: 100dvh; 
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
+            height: 100dvh; width: 100vw;
+            display: flex; flex-direction: column;
             overflow: hidden; 
         }
 
-        /* Scanline effect */
+        /* 螢幕掃描線特效 */
         body::before {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 9999;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
+            z-index: 9999; background-size: 100% 2px, 3px 100%; pointer-events: none;
         }
 
         header {
-            padding: 10px 15px;
-            border-bottom: var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #000;
-            z-index: 1000;
-            flex-shrink: 0;
-            height: 50px;
+            padding: 10px 15px; border-bottom: var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            background: #000; z-index: 1000; flex-shrink: 0; height: 50px;
         }
         
-        @media (max-width: 600px) {
-            header div { font-size: 0.8rem; }
-            select { max-width: 120px; }
-        }
-
         select, button {
-            background: #000;
-            color: var(--term-green);
-            border: 1px solid var(--term-green);
-            padding: 5px;
-            font-family: inherit;
-            cursor: pointer;
-            outline: none;
-        }
-        select:focus, button:focus {
-            box-shadow: 0 0 5px var(--term-dim);
+            background: #000; color: var(--term-green); border: 1px solid var(--term-green);
+            padding: 5px; font-family: inherit; cursor: pointer; outline: none;
         }
 
         #chat-box {
-            flex: 1; 
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
+            flex: 1; overflow-y: auto; padding: 20px;
+            display: flex; flex-direction: column; gap: 20px; width: 100%;
         }
 
-        .msg {
-            max-width: 100%;
-            padding: 12px;
-            line-height: 1.5;
-            position: relative;
-            word-wrap: break-word;
-        }
-
+        .msg { max-width: 100%; padding: 12px; line-height: 1.5; position: relative; }
         .msg-user {
-            align-self: flex-end;
-            text-align: right;
-            border-right: 2px solid var(--user-cyan);
-            color: var(--user-cyan);
-            background: rgba(0, 255, 255, 0.05);
-            max-width: 90%;
-            white-space: pre-wrap; 
+            align-self: flex-end; text-align: right; border-right: 2px solid var(--user-cyan);
+            color: var(--user-cyan); background: rgba(0, 255, 255, 0.05);
+            max-width: 90%; white-space: pre-wrap; 
         }
-
         .msg-ai {
-            align-self: flex-start;
-            border-left: 2px solid var(--term-green);
-            color: #ddd; 
-            background: rgba(0, 255, 65, 0.05);
-            width: 100%; 
+            align-self: flex-start; border-left: 2px solid var(--term-green);
+            color: #ddd; background: rgba(0, 255, 65, 0.05); width: 100%; 
         }
-        
-        .msg-ai p { margin: 5px 0; }
-        .msg-ai strong { color: #fff; font-weight: bold; }
-        .msg-ai h1, .msg-ai h2, .msg-ai h3 { color: #fff; margin: 15px 0 10px 0; border-bottom: 1px solid #444; }
-        .msg-ai ul, .msg-ai ol { margin: 5px 0 5px 20px; padding: 0; }
-        
-        table { border-collapse: collapse; width: 100%; margin: 10px 0; color: #ddd; }
-        th, td { border: 1px solid #555; padding: 8px; text-align: left; }
-        th { background-color: #222; color: var(--term-green); }
 
-        /* Code Block Styling */
-        .code-block {
-            margin: 15px 0;
-            border: 1px solid #444;
-            background: #1e1e1e;
-            border-radius: 4px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+        /* 代碼塊 */
+        .code-block { margin: 15px 0; border: 1px solid #444; background: #1e1e1e; border-radius: 4px; overflow: hidden; }
         .code-header {
-            background: #2d2d2d;
-            padding: 6px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.75rem;
-            color: #aaa;
-            border-bottom: 1px solid #444;
+            background: #2d2d2d; padding: 6px 12px; display: flex; justify-content: space-between;
+            align-items: center; font-size: 0.75rem; color: #aaa; border-bottom: 1px solid #444;
         }
-        .code-info { display: flex; gap: 15px; align-items: center; font-family: 'Consolas', monospace; }
+        .code-info { display: flex; gap: 15px; font-family: 'Consolas', monospace; }
         .code-actions { display: flex; gap: 8px; }
-        
-        .code-btn {
-            background: transparent;
-            border: 1px solid #555;
-            color: #aaa;
-            padding: 2px 8px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .code-btn:hover { color: #fff; border-color: #fff; }
-        
-        .run-btn {
-            color: var(--user-cyan) !important;
-            border-color: var(--user-cyan) !important;
-            font-weight: bold;
-            display: flex; align-items: center; gap: 4px;
-        }
-        .run-btn svg { width: 10px; height: 10px; fill: currentColor; }
-        .run-btn:hover { background: rgba(0,255,255,0.1); }
+        .code-btn { background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; cursor: pointer; font-size: 0.7rem; }
+        .code-btn:hover { border-color: #fff; color: #fff; }
+        .run-btn { color: var(--user-cyan) !important; border-color: var(--user-cyan) !important; font-weight: bold; }
 
-        pre { margin: 0; padding: 0; width: 100%; overflow-x: auto; }
-        code { font-family: 'Consolas', monospace; display: block; padding: 15px; color: #abb2bf; }
+        pre { margin: 0; padding: 0; overflow-x: auto; }
+        code { font-family: 'Consolas', monospace; display: block; padding: 15px; }
 
         #input-area {
             border-top: var(--border); padding: 15px; display: flex; gap: 10px; background: #000;
-            z-index: 1000; flex-shrink: 0; min-height: 70px; padding-bottom: env(safe-area-inset-bottom, 20px); 
+            z-index: 1000; flex-shrink: 0; min-height: 70px;
         }
-        
         input[type="text"] {
             flex: 1; background: #111; border: 1px solid #333; color: var(--term-green);
             padding: 12px; font-family: inherit; outline: none; font-size: 16px;
         }
-        
-        button#send-btn {
-            background: var(--term-green); color: #000; border: 1px solid var(--term-green);
-            padding: 10px 20px; font-weight: bold; min-width: 80px;
-        }
-        button#send-btn.stop-mode { background: transparent; color: var(--alert-red); border-color: var(--alert-red); }
+        #send-btn { background: var(--term-green); font-weight: bold; color: #000; border: none; padding: 0 20px; cursor: pointer; }
+        #send-btn.stop-mode { background: transparent; border: 1px solid var(--alert-red); color: var(--alert-red); }
 
-        /* Console Modal */
-        #console-modal {
-            display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 99999;
-            justify-content: center; align-items: center;
+        /* 彈窗 */
+        .hacker-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 99999; justify-content: center; align-items: center;
         }
-        .console-window {
+        .modal-win {
             width: 90%; max-width: 800px; height: 80vh;
-            background: var(--console-bg);
-            border: 2px solid var(--term-green);
-            display: flex; flex-direction: column;
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
-            position: relative;
+            background: var(--console-bg); border: 2px solid var(--term-green);
+            display: flex; flex-direction: column; box-shadow: 0 0 20px var(--term-dim);
         }
-        .console-header {
+        .modal-head {
             padding: 10px; background: #111; border-bottom: 1px solid var(--term-green);
             display: flex; justify-content: space-between; align-items: center;
         }
-        .console-title {
-            color: var(--term-green); font-weight: bold; display: flex; align-items: center; gap: 10px;
-        }
-        .console-close {
-            background: transparent; border: none; color: var(--alert-red); font-size: 1.5rem; line-height: 1; padding: 0 10px;
-        }
-        .console-close:hover { color: #fff; }
-
-        .console-body {
-            flex: 1; padding: 15px; overflow-y: auto; font-family: 'Consolas', monospace; color: #ccc;
-            display: flex; flex-direction: column;
-        }
-        .console-hr {
-            border: 0; border-top: 1px dashed #333; margin: 10px 0; width: 100%;
-        }
-        .log-line { margin-bottom: 4px; border-bottom: 1px solid #1a1a1a; padding: 2px 0; word-break: break-all; }
-        .log-err { color: var(--alert-red); }
-        .log-warn { color: orange; }
+        .modal-close { background: transparent; border: none; color: var(--alert-red); font-size: 1.5rem; cursor: pointer; font-weight: bold; }
+        .modal-body { flex: 1; padding: 20px; overflow-y: auto; color: #ccc; font-family: 'Consolas', monospace; }
+        .modal-hr { border: 0; border-top: 1px dashed #444; margin: 15px 0; }
         
-        /* Iframe for HTML preview */
-        #html-preview-frame {
-            width: 100%; height: 100%; border: none; background: #fff;
+        .share-link-box {
+            background: #000; border: 1px dashed var(--term-green); padding: 15px;
+            color: #fff; word-break: break-all; margin: 15px 0; position: relative;
         }
-        .html-wrapper { flex: 1; display: flex; flex-direction: column; height: 100%; }
+        .copy-link-icon { position: absolute; right: 5px; top: 5px; cursor: pointer; background: var(--term-green); color: #000; padding: 2px 5px; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -253,132 +142,97 @@
         <option value="gpt-5-nano">✨ GPT 5 Nano (OpenAI Flex)</option> 
         <option value="gpt-5-mini">✨ GPT 5 Mini (OpenAI Flex)</option>
     </select>
-    <button onclick="deleteHistory()" style="border-color:var(--alert-red); color:var(--alert-red);">PURGE LOGS</button>
+    <div style="display:flex; gap:10px;">
+        <button onclick="deleteHistory()" style="color:var(--alert-red); border-color:var(--alert-red);">PURGE</button>
+    </div>
 </header>
 
 <div id="chat-box"></div>
 
 <div id="input-area">
-    <input type="text" id="user-input" placeholder="Enter command..." autocomplete="off">
+    <input type="text" id="user-input" placeholder="Execute command..." autocomplete="off">
     <button id="send-btn" onclick="handleButtonClick()">SEND</button>
 </div>
 
-<!-- Hacker Console Modal -->
-<div id="console-modal">
-    <div class="console-window">
-        <div class="console-header">
-            <div class="console-title">
-                <!-- Run Icon -->
+<!-- 通用彈窗 -->
+<div id="hacker-modal" class="hacker-modal">
+    <div class="modal-win">
+        <div class="modal-head">
+            <div style="display:flex; align-items:center; gap:10px; color:var(--term-green);">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                <span id="console-label">JavaScript Console</span>
+                <span id="modal-label">Console</span>
             </div>
-            <button class="console-close" onclick="closeConsole()">×</button>
+            <button class="modal-close" onclick="closeModal()">×</button>
         </div>
-        <div class="console-body" id="console-content">
-            <!-- Content injected via JS -->
-        </div>
+        <div class="modal-body" id="modal-content"></div>
     </div>
 </div>
 
 <script>
+    // 解決 localStorage 可能被阻擋的問題
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem('chatHistory')) || [];
+    } catch (e) { console.error("Storage access denied."); }
+
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const modelSelect = document.getElementById('model-select');
-    const consoleModal = document.getElementById('console-modal');
-    const consoleContent = document.getElementById('console-content');
-    const consoleLabel = document.getElementById('console-label');
+    const hackerModal = document.getElementById('hacker-modal');
+    const modalContent = document.getElementById('modal-content');
+    const modalLabel = document.getElementById('modal-label');
 
-    let history = JSON.parse(localStorage.getItem('chatHistory')) || [];
     let isGenerating = false;
     let abortController = null;
 
-    // --- Format Utils ---
+    // 安全編碼
+    const getB64 = (str) => btoa(unescape(encodeURIComponent(str)));
+    const fromB64 = (str) => decodeURIComponent(escape(atob(str)));
+
     function formatSize(text) {
-        const blob = new Blob([text]);
-        const bytes = blob.size;
+        const bytes = new Blob([text]).size;
         if (bytes < 1024) return bytes + " B";
-        else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + " KB";
-        else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + " MB";
-        else return (bytes / 1073741824).toFixed(2) + " GB";
+        return (bytes / 1024).toFixed(2) + " KB";
     }
 
-    // --- Marked Configuration ---
+    // Markdown 解析器設定
     const renderer = new marked.Renderer();
-    
-    // Custom Code Block Renderer
     renderer.code = function({ text, lang }) {
         const validLang = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
         const highlighted = hljs.highlight(text, { language: validLang }).value;
-        const sizeStr = formatSize(text);
-        const lenStr = text.length;
-
-        // Check if runnable
-        const isRunable = (['javascript', 'js', 'html'].includes(validLang.toLowerCase()));
-        let runBtnHTML = '';
-        
-        if (isRunable) {
-            runBtnHTML = `
-                <button class="code-btn run-btn" onclick="openRunner(this, '${validLang.toLowerCase()}')">
-                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> RUN
-                </button>
-            `;
-        }
+        const b64 = getB64(text);
+        const runnable = ['javascript', 'js', 'html'].includes(validLang.toLowerCase());
 
         return `
             <div class="code-block">
                 <div class="code-header">
                     <div class="code-info">
-                        <span style="color:#fff; font-weight:bold;">${validLang.toUpperCase()}</span>
-                        <span>Length: ${lenStr}</span>
-                        <span>Size: ${sizeStr}</span>
+                        <strong style="color:#fff">${validLang.toUpperCase()}</strong>
+                        <span>Len: ${text.length}</span>
+                        <span>Size: ${formatSize(text)}</span>
                     </div>
                     <div class="code-actions">
-                        ${runBtnHTML}
-                        <button class="code-btn" onclick="copyCode(this)">COPY</button>
+                        ${runnable ? `<button class="code-btn run-btn" onclick="openRunner('${b64}', '${validLang.toLowerCase()}')">RUN</button>` : ''}
+                        <button class="code-btn" onclick="copyCode('${b64}', this)">COPY</button>
                     </div>
                 </div>
                 <pre><code class="hljs language-${validLang}">${highlighted}</code></pre>
-                <script type="text/plain" class="hidden-source">${text}</script>
-            </div>
-        `;
+            </div>`;
     };
-
-    // IMPORTANT: We do NOT set sanitize: true because user wants to see entities rendered.
-    // marked default is false (in newer versions) or we rely on basic parsing.
-    marked.use({ renderer, breaks: true, gfm: true });
-
-    // --- Core Chat Functions ---
+    marked.setOptions({ renderer, breaks: true, gfm: true });
 
     function loadHistory() {
         chatBox.innerHTML = '';
         history.forEach(msg => {
             const div = document.createElement('div');
-            const isAI = (msg.role === 'assistant' || msg.role === 'ai');
-            div.className = `msg ${isAI ? 'msg-ai' : 'msg-user'}`;
-            
-            if (isAI) {
-                // AI messages are Markdown parsed.
-                // We pass raw content. Marked converts < to &lt; inside HTML.
-                // Browser interprets &lt; as < symbol.
-                div.innerHTML = marked.parse(msg.content);
-                // Highlight code blocks
-                div.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
-            } else {
-                // User messages are plain text (safe).
-                div.textContent = msg.content;
-            }
+            div.className = `msg ${msg.role === 'user' ? 'msg-user' : 'msg-ai'}`;
+            if (msg.role === 'user') div.textContent = msg.content;
+            else div.innerHTML = marked.parse(msg.content);
             chatBox.appendChild(div);
         });
+        chatBox.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
         chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    function deleteHistory() {
-        if(confirm("SYSTEM WARNING: Confirm purge of all session logs?")) {
-            localStorage.removeItem('chatHistory');
-            history = [];
-            loadHistory();
-        }
     }
 
     async function sendMessage() {
@@ -387,200 +241,88 @@
 
         isGenerating = true;
         abortController = new AbortController();
-        userInput.value = '';
-        userInput.disabled = true;
-        sendBtn.innerHTML = 'STOP';
-        sendBtn.classList.add('stop-mode');
+        userInput.value = ''; userInput.disabled = true;
+        sendBtn.innerHTML = 'STOP'; sendBtn.classList.add('stop-mode');
 
-        // Render User Message (TextContent ensures exactly what user typed is shown)
-        const userDiv = document.createElement('div');
-        userDiv.className = 'msg msg-user';
-        userDiv.textContent = text;
-        chatBox.appendChild(userDiv);
+        const uDiv = document.createElement('div');
+        uDiv.className = 'msg msg-user'; uDiv.textContent = text;
+        chatBox.appendChild(uDiv);
         history.push({ role: 'user', content: text });
 
-        // Render AI Message Container
         const aiDiv = document.createElement('div');
-        aiDiv.className = 'msg msg-ai';
-        chatBox.appendChild(aiDiv);
+        aiDiv.className = 'msg msg-ai'; chatBox.appendChild(aiDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        let fullReply = "";
-        
+        let full = "";
         try {
-            const response = await fetch('/api/models', {
+            const res = await fetch('/api/models', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model: modelSelect.value, messages: history }),
                 signal: abortController.signal
             });
-
-            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
-
-            const reader = response.body.getReader();
+            const reader = res.body.getReader();
             const decoder = new TextDecoder();
-
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                
-                const chunk = decoder.decode(value, { stream: true });
-                fullReply += chunk;
-                
-                // Real-time render. 
-                // We DO NOT manually replace < or > here. Marked does it.
-                // If AI sends "Use <div>", Marked -> "<p>Use &lt;div&gt;</p>".
-                // Browser renders "Use <div>".
-                aiDiv.innerHTML = marked.parse(fullReply);
+                full += decoder.decode(value, { stream: true });
+                aiDiv.innerHTML = marked.parse(full);
                 aiDiv.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
-
-            history.push({ role: 'assistant', content: fullReply });
-            localStorage.setItem('chatHistory', JSON.stringify(history));
-
-        } catch (err) {
-            if (err.name !== 'AbortError') {
-                aiDiv.innerHTML = `<span style="color:var(--alert-red); font-weight:bold;">[SYSTEM ERROR] ${err.message}</span>`;
-            } else {
-                aiDiv.innerHTML += `<br><span style="color:var(--alert-red)">[CONNECTION TERMINATED]</span>`;
-            }
-        } finally {
-            isGenerating = false;
-            userInput.disabled = false;
-            userInput.focus();
-            sendBtn.innerHTML = 'SEND';
-            sendBtn.classList.remove('stop-mode');
-        }
-    }
-
-    function handleButtonClick() {
-        if (isGenerating && abortController) abortController.abort();
-        else sendMessage();
-    }
-
-    userInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
-
-    // --- Console / Runner Logic ---
-
-    window.openRunner = function(btn, lang) {
-        const source = btn.closest('.code-block').querySelector('.hidden-source').textContent;
-        consoleModal.style.display = 'flex';
-        consoleContent.innerHTML = ''; // Clear previous
-
-        if (lang === 'html') {
-            consoleLabel.innerText = "HTML Preview";
-            runHTML(source);
-        } else {
-            consoleLabel.innerText = "JavaScript Console";
-            runJS(source);
-        }
-    };
-
-    window.closeConsole = function() {
-        consoleModal.style.display = 'none';
-        consoleContent.innerHTML = '';
-    };
-
-    function runJS(code) {
-        // Initial UI
-        consoleContent.innerHTML = `
-            <div style="color: #888;">// Initializing JS Sandbox Environment...</div>
-            <div style="color: #888;">// Fetch API is [BLOCKED]</div>
-            <hr class="console-hr">
-            <div id="js-logs"></div>
-        `;
-        const logsContainer = document.getElementById('js-logs');
-
-        const logMsg = (msg, type = 'info') => {
-            const div = document.createElement('div');
-            div.className = `log-line ${type === 'error' ? 'log-err' : (type === 'warn' ? 'log-warn' : '')}`;
-            
-            if (typeof msg === 'object') {
-                try { div.textContent = JSON.stringify(msg, null, 2); } 
-                catch(e) { div.textContent = '[Circular/Object]'; }
-            } else {
-                div.textContent = String(msg);
-            }
-            logsContainer.appendChild(div);
-            // Scroll to bottom
-            consoleContent.scrollTop = consoleContent.scrollHeight;
-        };
-
-        // Sandbox Proxy
-        const safeConsole = {
-            log: (m) => logMsg(m, 'info'),
-            error: (m) => logMsg(m, 'error'),
-            warn: (m) => logMsg(m, 'warn'),
-            info: (m) => logMsg(m, 'info')
-        };
-
-        const blockedFetch = () => {
-            logMsg("Security Alert: fetch() is blocked in this console.", 'error');
-            return Promise.reject("Blocked");
-        };
-
-        try {
-            // Create function with overridden globals
-            const runner = new Function('console', 'fetch', 'window', 'document', code);
-            runner(safeConsole, blockedFetch, {}, {}); 
+            history.push({ role: 'assistant', content: full });
+            try { localStorage.setItem('chatHistory', JSON.stringify(history)); } catch(e){}
         } catch (e) {
-            logMsg("Runtime Error: " + e.message, 'error');
+            if (e.name !== 'AbortError') aiDiv.innerHTML = `<div style="color:var(--alert-red)">[SYSTEM ERROR] ${e.message}</div>`;
+        } finally {
+            isGenerating = false; userInput.disabled = false; userInput.focus();
+            sendBtn.innerHTML = 'SEND'; sendBtn.classList.remove('stop-mode');
         }
     }
 
-    function runHTML(code) {
-        // Wrapper for HTML preview
-        const wrapper = document.createElement('div');
-        wrapper.className = 'html-wrapper';
+    window.openRunner = function(b64, lang) {
+        const code = fromB64(b64);
+        hackerModal.style.display = 'flex';
+        modalContent.innerHTML = '';
         
-        // Add HR and Header like console
-        wrapper.innerHTML = `
-            <div style="padding: 0 0 10px 0; color:#888;">// Rendering HTML Output...</div>
-            <hr class="console-hr" style="margin-bottom:0;">
-        `;
-        
-        const iframe = document.createElement('iframe');
-        iframe.id = 'html-preview-frame';
-        
-        // Script to block fetch inside iframe
-        const securityScript = `
-            <script>
-                console.log = function(){}; // Mute console in iframe if needed or keep default
-                window.fetch = function() {
-                    document.body.innerHTML += '<div style="color:red; background:black; padding:5px;">Security Alert: fetch() blocked</div>';
-                    throw new Error('Blocked');
-                };
-                // Block XHR too
-                window.XMLHttpRequest = function() { throw new Error('Blocked'); };
-            <\/script>
-        `;
-        
-        iframe.srcdoc = `
-            <style>body{color:#000; background:#fff; margin:10px; font-family:sans-serif;}</style>
-            ${securityScript}
-            ${code}
-        `;
-        
-        wrapper.appendChild(iframe);
-        consoleContent.appendChild(wrapper);
-    }
-
-    window.copyCode = function(btn) {
-        const source = btn.closest('.code-block').querySelector('.hidden-source').textContent;
-        navigator.clipboard.writeText(source).then(() => {
-            const original = btn.textContent;
-            btn.textContent = "COPIED";
-            btn.style.color = "#fff";
-            btn.style.borderColor = "#fff";
-            setTimeout(() => {
-                btn.textContent = original;
-                btn.style.color = "";
-                btn.style.borderColor = "";
-            }, 1500);
-        });
+        if (lang === 'html') {
+            modalLabel.innerText = "HTML Preview";
+            modalContent.innerHTML = `<div style="color:#888">// Rendering HTML Output...</div><hr class="modal-hr">`;
+            const ifr = document.createElement('iframe');
+            ifr.style.width = '100%'; ifr.style.height = '400px'; ifr.style.background = '#fff'; ifr.style.border = 'none';
+            modalContent.appendChild(ifr);
+            // 阻斷 fetch 的腳本，使用拆分字串避免解析錯誤
+            const sec = '<script>window.fetch=()=>Promise.reject("Blocked");<' + '/script>';
+            ifr.srcdoc = sec + code;
+        } else {
+            modalLabel.innerText = "JavaScript Console";
+            modalContent.innerHTML = `<div style="color:#888">// JS Sandbox Init... (fetch is BLOCKED)</div><hr class="modal-hr"><div id="js-logs"></div>`;
+            const logBox = document.getElementById('js-logs');
+            const logger = (m, err=false) => {
+                const l = document.createElement('div'); if(err) l.style.color='var(--alert-red)';
+                l.textContent = (typeof m === 'object') ? JSON.stringify(m) : m;
+                logBox.appendChild(l);
+            };
+            try {
+                const fn = new Function('console', 'fetch', code);
+                fn({ log: logger, error: (m)=>logger(m,true), warn: logger }, ()=> { logger("fetch() BLOCKED", true); return Promise.reject(); });
+            } catch(e) { logger("Error: " + e.message, true); }
+        }
     };
 
+    window.copyLinkText = () => {
+        navigator.clipboard.writeText(document.getElementById('link-text').innerText);
+        document.querySelector('.copy-link-icon').innerText = "DONE";
+    };
+    window.closeModal = () => { hackerModal.style.display = 'none'; };
+    window.copyCode = (b64, btn) => {
+        navigator.clipboard.writeText(fromB64(b64));
+        btn.innerText = 'COPIED'; setTimeout(()=> btn.innerText = 'COPY', 1500);
+    };
+    window.deleteHistory = () => { if(confirm("Purge logs?")) { history=[]; localStorage.removeItem('chatHistory'); loadHistory(); } };
+    window.handleButtonClick = () => { if(isGenerating) abortController.abort(); else sendMessage(); };
+    userInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
     window.onload = loadHistory;
 </script>
 </body>
