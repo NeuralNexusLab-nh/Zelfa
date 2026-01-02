@@ -18,6 +18,7 @@
             --user-cyan: #0ff;
             --alert-red: #ff3333;
             --border: 1px solid #333;
+            --console-bg: #0c0c0c;
         }
         
         * { box-sizing: border-box; }
@@ -34,13 +35,14 @@
             overflow: hidden; 
         }
 
+        /* Scanline effect */
         body::before {
             content: " ";
             display: block;
             position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 999;
+            z-index: 9999;
             background-size: 100% 2px, 3px 100%;
             pointer-events: none;
         }
@@ -59,36 +61,38 @@
         
         @media (max-width: 600px) {
             header div { font-size: 0.8rem; }
-            #save-btn { padding: 5px 10px; font-size: 0.8rem; }
-            select { max-width: 100px; }
+            select { max-width: 120px; }
         }
 
-        select {
+        select, button {
             background: #000;
             color: var(--term-green);
             border: 1px solid var(--term-green);
             padding: 5px;
             font-family: inherit;
+            cursor: pointer;
+            outline: none;
+        }
+        select:focus, button:focus {
+            box-shadow: 0 0 5px var(--term-dim);
         }
 
         #chat-box {
             flex: 1; 
             overflow-y: auto;
-            overflow-x: hidden; 
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
+            width: 100%;
         }
 
         .msg {
             max-width: 100%;
-            padding: 10px;
+            padding: 12px;
             line-height: 1.5;
             position: relative;
-            white-space: pre-wrap;       
-            word-wrap: break-word;       
-            overflow-wrap: anywhere;     
+            word-wrap: break-word;
         }
 
         .msg-user {
@@ -97,7 +101,8 @@
             border-right: 2px solid var(--user-cyan);
             color: var(--user-cyan);
             background: rgba(0, 255, 255, 0.05);
-            max-width: 90%; 
+            max-width: 90%;
+            white-space: pre-wrap; 
         }
 
         .msg-ai {
@@ -109,30 +114,59 @@
         }
         
         .msg-ai p { margin: 5px 0; }
-        .msg-ai h1, .msg-ai h2, .msg-ai h3 { color: #fff; margin: 10px 0; border-bottom: 1px solid #444; }
+        .msg-ai strong { color: #fff; font-weight: bold; }
+        .msg-ai h1, .msg-ai h2, .msg-ai h3 { color: #fff; margin: 15px 0 10px 0; border-bottom: 1px solid #444; }
+        .msg-ai ul, .msg-ai ol { margin: 5px 0 5px 20px; padding: 0; }
         
         table { border-collapse: collapse; width: 100%; margin: 10px 0; color: #ddd; }
-        th, td { border: 1px solid #fff; padding: 8px; text-align: left; }
+        th, td { border: 1px solid #555; padding: 8px; text-align: left; }
         th { background-color: #222; color: var(--term-green); }
 
-        .typing-cursor::after {
-            content: '█';
-            animation: blink 1s step-end infinite;
-            color: var(--term-green);
-            margin-left: 5px;
-        }
-        @keyframes blink { 50% { opacity: 0; } }
-
+        /* Code Block Styling */
         .code-block {
-            margin: 10px 0; border: 1px solid #444; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; 
+            margin: 15px 0;
+            border: 1px solid #444;
+            background: #1e1e1e;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         .code-header {
-            display: flex; justify-content: space-between; align-items: center; background: #2d2d2d;
-            padding: 5px 10px; font-size: 0.8rem; color: #aaa; border-bottom: 1px solid #444; 
+            background: #2d2d2d;
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #aaa;
+            border-bottom: 1px solid #444;
         }
-        pre { background: #1e1e1e; margin: 0; padding: 0; width: 100%; overflow-x: auto; border: none; }
-        code { font-family: 'Consolas', monospace; }
-        pre code { display: block; padding: 10px; color: #abb2bf; }
+        .code-info { display: flex; gap: 15px; align-items: center; font-family: 'Consolas', monospace; }
+        .code-actions { display: flex; gap: 8px; }
+        
+        .code-btn {
+            background: transparent;
+            border: 1px solid #555;
+            color: #aaa;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .code-btn:hover { color: #fff; border-color: #fff; }
+        
+        .run-btn {
+            color: var(--user-cyan) !important;
+            border-color: var(--user-cyan) !important;
+            font-weight: bold;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .run-btn svg { width: 10px; height: 10px; fill: currentColor; }
+        .run-btn:hover { background: rgba(0,255,255,0.1); }
+
+        pre { margin: 0; padding: 0; width: 100%; overflow-x: auto; }
+        code { font-family: 'Consolas', monospace; display: block; padding: 15px; color: #abb2bf; }
 
         #input-area {
             border-top: var(--border); padding: 15px; display: flex; gap: 10px; background: #000;
@@ -146,25 +180,53 @@
         
         button#send-btn {
             background: var(--term-green); color: #000; border: 1px solid var(--term-green);
-            padding: 10px 20px; cursor: pointer; font-weight: bold; min-width: 80px;
+            padding: 10px 20px; font-weight: bold; min-width: 80px;
         }
-
         button#send-btn.stop-mode { background: transparent; color: var(--alert-red); border-color: var(--alert-red); }
 
-        .spinner {
-            width: 14px; height: 14px; border: 2px solid var(--alert-red);
-            border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;
+        /* Console Modal */
+        #console-modal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 99999;
+            justify-content: center; align-items: center;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .console-window {
+            width: 90%; max-width: 800px; height: 80vh;
+            background: var(--console-bg);
+            border: 2px solid var(--term-green);
+            display: flex; flex-direction: column;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
+            position: relative;
+        }
+        .console-header {
+            padding: 10px; background: #111; border-bottom: 1px solid var(--term-green);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .console-title {
+            color: var(--term-green); font-weight: bold; display: flex; align-items: center; gap: 10px;
+        }
+        .console-close {
+            background: transparent; border: none; color: var(--alert-red); font-size: 1.5rem; line-height: 1; padding: 0 10px;
+        }
+        .console-close:hover { color: #fff; }
 
-        #hacker-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center;
+        .console-body {
+            flex: 1; padding: 15px; overflow-y: auto; font-family: 'Consolas', monospace; color: #ccc;
+            display: flex; flex-direction: column;
         }
-        .modal-content {
-            border: 2px solid var(--term-green); background: #000; padding: 30px;
-            width: 90%; max-width: 500px; text-align: center; box-shadow: 0 0 20px var(--term-green);
+        .console-hr {
+            border: 0; border-top: 1px dashed #333; margin: 10px 0; width: 100%;
         }
+        .log-line { margin-bottom: 4px; border-bottom: 1px solid #1a1a1a; padding: 2px 0; word-break: break-all; }
+        .log-err { color: var(--alert-red); }
+        .log-warn { color: orange; }
+        
+        /* Iframe for HTML preview */
+        #html-preview-frame {
+            width: 100%; height: 100%; border: none; background: #fff;
+        }
+        .html-wrapper { flex: 1; display: flex; flex-direction: column; height: 100%; }
     </style>
 </head>
 <body>
@@ -173,71 +235,137 @@
     <div>ZELFA // TERMINAL</div>
     <select id="model-select">
         <option value="gpt-oss:120b">GPT OSS (Ollama)</option> 
+        <option value="deepseek-v3.2">DeepSeek V3.2 (Ollama)</option> 
+        <option value="gemma3:27b">Gemma3 (Ollama)</option>
+        <option value="gemini-3-flash-preview">Gemini 3 Flash Preview (Ollama)</option> 
+        <option value="qwen3-vl:235b">Qwen3 VL (Ollama)</option> 
+        <option value="qwen3-coder:480b">Qwen3 Coder (Ollama)</option>
+        <option value="ministral-3:14b">Ministral 3 (Ollama)</option> 
+        <option value="nemotron-3-nano:30b">Nemotron 3 Nano (Ollama)</option> 
+        <option value="devstral-2:123b">Devstral 2 (Ollama)</option> 
+        <option value="rnj-1:8b">RNJ 1 (Ollama)</option> 
+        <option value="minimax-m2">Minimax M2 (Ollama)</option> 
+        <option value="kimi-k2:1t">Kimi K2 (Ollama)</option> 
+        <option value="cogito-2.1:671b">Cogito 2.1 (Ollama)</option> 
+        <option value="glm-4.7">GLM 4.7 (Ollama)</option> 
         <option value="gpt-4o-mini">✨ GPT 4o Mini (OpenAI)</option>
+        <option value="gpt-4.1-nano">✨ GPT 4.1 Nano (OpenAI)</option> 
         <option value="gpt-5-nano">✨ GPT 5 Nano (OpenAI Flex)</option> 
+        <option value="gpt-5-mini">✨ GPT 5 Mini (OpenAI Flex)</option>
     </select>
-    <button onclick="deleteHistory()" style="background:transparent; color:var(--alert-red); border:1px solid var(--alert-red); cursor:pointer; padding:5px 10px;">DELETE</button>
-    <button id="save-btn" onclick="saveChat()" style="background:transparent; color:var(--user-cyan); border:1px solid var(--user-cyan); cursor:pointer; padding:5px 10px;">SHARE</button>
+    <button onclick="deleteHistory()" style="border-color:var(--alert-red); color:var(--alert-red);">PURGE LOGS</button>
 </header>
 
 <div id="chat-box"></div>
 
 <div id="input-area">
-    <input type="text" id="user-input" placeholder="Execute command..." autocomplete="off">
+    <input type="text" id="user-input" placeholder="Enter command..." autocomplete="off">
     <button id="send-btn" onclick="handleButtonClick()">SEND</button>
 </div>
 
-<div id="hacker-modal">
-    <div class="modal-content">
-        <div style="color:var(--term-green); margin-bottom:20px;">>> DATA EXPORTED <<</div>
-        <div id="link-text" style="background:#111; padding:10px; color:#fff; word-break:break-all; border:1px dashed var(--term-green);">...</div>
-        <button onclick="document.getElementById('hacker-modal').style.display='none'" style="margin-top:20px; background:transparent; color:var(--alert-red); border:1px solid var(--alert-red); cursor:pointer; padding:10px;">CLOSE</button>
+<!-- Hacker Console Modal -->
+<div id="console-modal">
+    <div class="console-window">
+        <div class="console-header">
+            <div class="console-title">
+                <!-- Run Icon -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <span id="console-label">JavaScript Console</span>
+            </div>
+            <button class="console-close" onclick="closeConsole()">×</button>
+        </div>
+        <div class="console-body" id="console-content">
+            <!-- Content injected via JS -->
+        </div>
     </div>
 </div>
 
 <script>
-    // 轉義 HTML 符號，確保瀏覽器不會把 <文字> 當成標籤
-    function escapeHTML(str) {
-        if (!str) return "";
-        return str.replace(/[&<>"']/g, m => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        }[m]));
-    }
-
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const modelSelect = document.getElementById('model-select');
+    const consoleModal = document.getElementById('console-modal');
+    const consoleContent = document.getElementById('console-content');
+    const consoleLabel = document.getElementById('console-label');
 
     let history = JSON.parse(localStorage.getItem('chatHistory')) || [];
     let isGenerating = false;
     let abortController = null;
 
-    // 配置 Marked
+    // --- Format Utils ---
+    function formatSize(text) {
+        const blob = new Blob([text]);
+        const bytes = blob.size;
+        if (bytes < 1024) return bytes + " B";
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + " KB";
+        else if (bytes < 1073741824) return (bytes / 1048576).toFixed(2) + " MB";
+        else return (bytes / 1073741824).toFixed(2) + " GB";
+    }
+
+    // --- Marked Configuration ---
     const renderer = new marked.Renderer();
+    
+    // Custom Code Block Renderer
     renderer.code = function({ text, lang }) {
         const validLang = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
         const highlighted = hljs.highlight(text, { language: validLang }).value;
+        const sizeStr = formatSize(text);
+        const lenStr = text.length;
+
+        // Check if runnable
+        const isRunable = (['javascript', 'js', 'html'].includes(validLang.toLowerCase()));
+        let runBtnHTML = '';
+        
+        if (isRunable) {
+            runBtnHTML = `
+                <button class="code-btn run-btn" onclick="openRunner(this, '${validLang.toLowerCase()}')">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> RUN
+                </button>
+            `;
+        }
+
         return `
             <div class="code-block">
-                <div class="code-header"><span>${validLang}</span></div>
+                <div class="code-header">
+                    <div class="code-info">
+                        <span style="color:#fff; font-weight:bold;">${validLang.toUpperCase()}</span>
+                        <span>Length: ${lenStr}</span>
+                        <span>Size: ${sizeStr}</span>
+                    </div>
+                    <div class="code-actions">
+                        ${runBtnHTML}
+                        <button class="code-btn" onclick="copyCode(this)">COPY</button>
+                    </div>
+                </div>
                 <pre><code class="hljs language-${validLang}">${highlighted}</code></pre>
-                <div class="hidden-code" style="display:none;">${text}</div>
-            </div>`;
+                <script type="text/plain" class="hidden-source">${text}</script>
+            </div>
+        `;
     };
-    marked.use({ renderer });
+
+    // IMPORTANT: We do NOT set sanitize: true because user wants to see entities rendered.
+    // marked default is false (in newer versions) or we rely on basic parsing.
+    marked.use({ renderer, breaks: true, gfm: true });
+
+    // --- Core Chat Functions ---
 
     function loadHistory() {
         chatBox.innerHTML = '';
         history.forEach(msg => {
             const div = document.createElement('div');
-            const isAI = msg.role === 'assistant' || msg.role === 'ai';
+            const isAI = (msg.role === 'assistant' || msg.role === 'ai');
             div.className = `msg ${isAI ? 'msg-ai' : 'msg-user'}`;
+            
             if (isAI) {
-                // AI 回覆先轉義 < > 再解析 Markdown
-                const safeContent = msg.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                div.innerHTML = marked.parse(safeContent);
+                // AI messages are Markdown parsed.
+                // We pass raw content. Marked converts < to &lt; inside HTML.
+                // Browser interprets &lt; as < symbol.
+                div.innerHTML = marked.parse(msg.content);
+                // Highlight code blocks
+                div.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
             } else {
+                // User messages are plain text (safe).
                 div.textContent = msg.content;
             }
             chatBox.appendChild(div);
@@ -246,41 +374,39 @@
     }
 
     function deleteHistory() {
-        localStorage.removeItem('chatHistory');
-        history = [];
-        loadHistory();
+        if(confirm("SYSTEM WARNING: Confirm purge of all session logs?")) {
+            localStorage.removeItem('chatHistory');
+            history = [];
+            loadHistory();
+        }
     }
 
     async function sendMessage() {
-        const rawText = userInput.value.trim();
-        if (!rawText || isGenerating) return;
+        const text = userInput.value.trim();
+        if (!text || isGenerating) return;
 
-        // 介面鎖定
         isGenerating = true;
         abortController = new AbortController();
         userInput.value = '';
         userInput.disabled = true;
-        sendBtn.innerHTML = `STOP <div class="spinner"></div>`;
+        sendBtn.innerHTML = 'STOP';
         sendBtn.classList.add('stop-mode');
 
-        // 顯示使用者訊息 (直接用 textContent 以策安全)
+        // Render User Message (TextContent ensures exactly what user typed is shown)
         const userDiv = document.createElement('div');
         userDiv.className = 'msg msg-user';
-        userDiv.textContent = rawText;
+        userDiv.textContent = text;
         chatBox.appendChild(userDiv);
-        
-        // 紀錄原始文字到歷史紀錄
-        history.push({ role: 'user', content: rawText });
+        history.push({ role: 'user', content: text });
 
-        // 準備 AI 回覆容器
+        // Render AI Message Container
         const aiDiv = document.createElement('div');
         aiDiv.className = 'msg msg-ai';
-        aiDiv.innerHTML = '<span class="typing-cursor"></span>';
         chatBox.appendChild(aiDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
         let fullReply = "";
-
+        
         try {
             const response = await fetch('/api/models', {
                 method: 'POST',
@@ -289,11 +415,11 @@
                 signal: abortController.signal
             });
 
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            
+
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
@@ -301,23 +427,24 @@
                 const chunk = decoder.decode(value, { stream: true });
                 fullReply += chunk;
                 
-                // 動態轉義並解析 Markdown 顯示
-                const safeContent = fullReply.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                aiDiv.innerHTML = marked.parse(safeContent) + '<span class="typing-cursor"></span>';
-                
+                // Real-time render. 
+                // We DO NOT manually replace < or > here. Marked does it.
+                // If AI sends "Use <div>", Marked -> "<p>Use &lt;div&gt;</p>".
+                // Browser renders "Use <div>".
+                aiDiv.innerHTML = marked.parse(fullReply);
                 aiDiv.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
 
-            // 完成
-            aiDiv.innerHTML = marked.parse(fullReply.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
             history.push({ role: 'assistant', content: fullReply });
             localStorage.setItem('chatHistory', JSON.stringify(history));
 
         } catch (err) {
-            console.error(err);
-            const errorMsg = err.name === 'AbortError' ? '[CONNECTION TERMINATED]' : `[SYSTEM ERROR] ${err.message}`;
-            aiDiv.innerHTML = `<span style="color:var(--alert-red)">${errorMsg}</span>`;
+            if (err.name !== 'AbortError') {
+                aiDiv.innerHTML = `<span style="color:var(--alert-red); font-weight:bold;">[SYSTEM ERROR] ${err.message}</span>`;
+            } else {
+                aiDiv.innerHTML += `<br><span style="color:var(--alert-red)">[CONNECTION TERMINATED]</span>`;
+            }
         } finally {
             isGenerating = false;
             userInput.disabled = false;
@@ -328,31 +455,132 @@
     }
 
     function handleButtonClick() {
-        if (isGenerating && abortController) {
-            abortController.abort();
+        if (isGenerating && abortController) abortController.abort();
+        else sendMessage();
+    }
+
+    userInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
+
+    // --- Console / Runner Logic ---
+
+    window.openRunner = function(btn, lang) {
+        const source = btn.closest('.code-block').querySelector('.hidden-source').textContent;
+        consoleModal.style.display = 'flex';
+        consoleContent.innerHTML = ''; // Clear previous
+
+        if (lang === 'html') {
+            consoleLabel.innerText = "HTML Preview";
+            runHTML(source);
         } else {
-            sendMessage();
+            consoleLabel.innerText = "JavaScript Console";
+            runJS(source);
+        }
+    };
+
+    window.closeConsole = function() {
+        consoleModal.style.display = 'none';
+        consoleContent.innerHTML = '';
+    };
+
+    function runJS(code) {
+        // Initial UI
+        consoleContent.innerHTML = `
+            <div style="color: #888;">// Initializing JS Sandbox Environment...</div>
+            <div style="color: #888;">// Fetch API is [BLOCKED]</div>
+            <hr class="console-hr">
+            <div id="js-logs"></div>
+        `;
+        const logsContainer = document.getElementById('js-logs');
+
+        const logMsg = (msg, type = 'info') => {
+            const div = document.createElement('div');
+            div.className = `log-line ${type === 'error' ? 'log-err' : (type === 'warn' ? 'log-warn' : '')}`;
+            
+            if (typeof msg === 'object') {
+                try { div.textContent = JSON.stringify(msg, null, 2); } 
+                catch(e) { div.textContent = '[Circular/Object]'; }
+            } else {
+                div.textContent = String(msg);
+            }
+            logsContainer.appendChild(div);
+            // Scroll to bottom
+            consoleContent.scrollTop = consoleContent.scrollHeight;
+        };
+
+        // Sandbox Proxy
+        const safeConsole = {
+            log: (m) => logMsg(m, 'info'),
+            error: (m) => logMsg(m, 'error'),
+            warn: (m) => logMsg(m, 'warn'),
+            info: (m) => logMsg(m, 'info')
+        };
+
+        const blockedFetch = () => {
+            logMsg("Security Alert: fetch() is blocked in this console.", 'error');
+            return Promise.reject("Blocked");
+        };
+
+        try {
+            // Create function with overridden globals
+            const runner = new Function('console', 'fetch', 'window', 'document', code);
+            runner(safeConsole, blockedFetch, {}, {}); 
+        } catch (e) {
+            logMsg("Runtime Error: " + e.message, 'error');
         }
     }
 
-    userInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
-
-    async function saveChat() {
-        try {
-            const res = await fetch('/api/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ history, model: modelSelect.value })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                document.getElementById('link-text').innerText = data.link;
-                document.getElementById('hacker-modal').style.display = 'flex';
-            }
-        } catch (e) { alert("Save failed: Backend not reached."); }
+    function runHTML(code) {
+        // Wrapper for HTML preview
+        const wrapper = document.createElement('div');
+        wrapper.className = 'html-wrapper';
+        
+        // Add HR and Header like console
+        wrapper.innerHTML = `
+            <div style="padding: 0 0 10px 0; color:#888;">// Rendering HTML Output...</div>
+            <hr class="console-hr" style="margin-bottom:0;">
+        `;
+        
+        const iframe = document.createElement('iframe');
+        iframe.id = 'html-preview-frame';
+        
+        // Script to block fetch inside iframe
+        const securityScript = `
+            <script>
+                console.log = function(){}; // Mute console in iframe if needed or keep default
+                window.fetch = function() {
+                    document.body.innerHTML += '<div style="color:red; background:black; padding:5px;">Security Alert: fetch() blocked</div>';
+                    throw new Error('Blocked');
+                };
+                // Block XHR too
+                window.XMLHttpRequest = function() { throw new Error('Blocked'); };
+            <\/script>
+        `;
+        
+        iframe.srcdoc = `
+            <style>body{color:#000; background:#fff; margin:10px; font-family:sans-serif;}</style>
+            ${securityScript}
+            ${code}
+        `;
+        
+        wrapper.appendChild(iframe);
+        consoleContent.appendChild(wrapper);
     }
 
-    // 初始化載入
+    window.copyCode = function(btn) {
+        const source = btn.closest('.code-block').querySelector('.hidden-source').textContent;
+        navigator.clipboard.writeText(source).then(() => {
+            const original = btn.textContent;
+            btn.textContent = "COPIED";
+            btn.style.color = "#fff";
+            btn.style.borderColor = "#fff";
+            setTimeout(() => {
+                btn.textContent = original;
+                btn.style.color = "";
+                btn.style.borderColor = "";
+            }, 1500);
+        });
+    };
+
     window.onload = loadHistory;
 </script>
 </body>
