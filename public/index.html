@@ -33,7 +33,7 @@
             overflow: hidden; 
         }
 
-        /* 螢幕掃描線特效 */
+        /* 掃描線效果 */
         body::before {
             content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
@@ -53,10 +53,11 @@
 
         #chat-box {
             flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column; gap: 20px; width: 100%;
+            display: flex; flex-direction: column; gap: 25px; width: 100%;
         }
 
-        .msg { max-width: 100%; padding: 12px; line-height: 1.5; position: relative; }
+        /* 訊息氣泡 */
+        .msg { max-width: 100%; padding: 12px; line-height: 1.6; position: relative; }
         .msg-user {
             align-self: flex-end; text-align: right; border-right: 2px solid var(--user-cyan);
             color: var(--user-cyan); background: rgba(0, 255, 255, 0.05);
@@ -65,6 +66,23 @@
         .msg-ai {
             align-self: flex-start; border-left: 2px solid var(--term-green);
             color: #ddd; background: rgba(0, 255, 65, 0.05); width: 100%; 
+        }
+
+        /* Markdown 表格白色框框 */
+        .msg-ai table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+            border: 1px solid #ffffff; /* 白色框線 */
+        }
+        .msg-ai th, .msg-ai td {
+            border: 1px solid #ffffff; /* 白色框線 */
+            padding: 10px;
+            text-align: left;
+        }
+        .msg-ai th {
+            background-color: #222;
+            color: var(--term-green);
         }
 
         /* 代碼塊 */
@@ -79,9 +97,10 @@
         .code-btn:hover { border-color: #fff; color: #fff; }
         .run-btn { color: var(--user-cyan) !important; border-color: var(--user-cyan) !important; font-weight: bold; }
 
-        pre { margin: 0; padding: 0; overflow-x: auto; }
+        pre { margin: 0; padding: 0; overflow-x: auto; border: none; }
         code { font-family: 'Consolas', monospace; display: block; padding: 15px; }
 
+        /* 輸入區 */
         #input-area {
             border-top: var(--border); padding: 15px; display: flex; gap: 10px; background: #000;
             z-index: 1000; flex-shrink: 0; min-height: 70px;
@@ -93,29 +112,24 @@
         #send-btn { background: var(--term-green); font-weight: bold; color: #000; border: none; padding: 0 20px; cursor: pointer; }
         #send-btn.stop-mode { background: transparent; border: 1px solid var(--alert-red); color: var(--alert-red); }
 
-        /* 彈窗 */
+        /* 駭客風執行視窗 */
         .hacker-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 99999; justify-content: center; align-items: center;
         }
         .modal-win {
-            width: 90%; max-width: 800px; height: 80vh;
+            width: 90%; max-width: 850px; height: 85vh;
             background: var(--console-bg); border: 2px solid var(--term-green);
-            display: flex; flex-direction: column; box-shadow: 0 0 20px var(--term-dim);
+            display: flex; flex-direction: column; box-shadow: 0 0 25px var(--term-dim);
         }
         .modal-head {
-            padding: 10px; background: #111; border-bottom: 1px solid var(--term-green);
+            padding: 12px; background: #111; border-bottom: 1px solid var(--term-green);
             display: flex; justify-content: space-between; align-items: center;
         }
-        .modal-close { background: transparent; border: none; color: var(--alert-red); font-size: 1.5rem; cursor: pointer; font-weight: bold; }
+        .modal-close { background: transparent; border: none; color: var(--alert-red); font-size: 1.8rem; cursor: pointer; font-weight: bold; line-height: 1; }
         .modal-body { flex: 1; padding: 20px; overflow-y: auto; color: #ccc; font-family: 'Consolas', monospace; }
         .modal-hr { border: 0; border-top: 1px dashed #444; margin: 15px 0; }
-        
-        .share-link-box {
-            background: #000; border: 1px dashed var(--term-green); padding: 15px;
-            color: #fff; word-break: break-all; margin: 15px 0; position: relative;
-        }
-        .copy-link-icon { position: absolute; right: 5px; top: 5px; cursor: pointer; background: var(--term-green); color: #000; padding: 2px 5px; font-size: 0.7rem; }
+        .log-err { color: var(--alert-red); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -142,9 +156,7 @@
         <option value="gpt-5-nano">✨ GPT 5 Nano (OpenAI Flex)</option> 
         <option value="gpt-5-mini">✨ GPT 5 Mini (OpenAI Flex)</option>
     </select>
-    <div style="display:flex; gap:10px;">
-        <button onclick="deleteHistory()" style="color:var(--alert-red); border-color:var(--alert-red);">PURGE</button>
-    </div>
+    <button onclick="deleteHistory()" style="color:var(--alert-red); border-color:var(--alert-red);">PURGE LOGS</button>
 </header>
 
 <div id="chat-box"></div>
@@ -154,13 +166,14 @@
     <button id="send-btn" onclick="handleButtonClick()">SEND</button>
 </div>
 
-<!-- 通用彈窗 -->
+<!-- 駭客風執行視窗 -->
 <div id="hacker-modal" class="hacker-modal">
     <div class="modal-win">
         <div class="modal-head">
             <div style="display:flex; align-items:center; gap:10px; color:var(--term-green);">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                <span id="modal-label">Console</span>
+                <!-- Run Icon -->
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <span id="modal-label" style="font-weight:bold; letter-spacing:1px;">JavaScript Console</span>
             </div>
             <button class="modal-close" onclick="closeModal()">×</button>
         </div>
@@ -169,12 +182,6 @@
 </div>
 
 <script>
-    // 解決 localStorage 可能被阻擋的問題
-    let history = [];
-    try {
-        history = JSON.parse(localStorage.getItem('chatHistory')) || [];
-    } catch (e) { console.error("Storage access denied."); }
-
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -183,10 +190,15 @@
     const modalContent = document.getElementById('modal-content');
     const modalLabel = document.getElementById('modal-label');
 
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem('chatHistory')) || [];
+    } catch (e) { console.warn("Local storage blocked."); }
+
     let isGenerating = false;
     let abortController = null;
 
-    // 安全編碼
+    // 安全處理函數
     const getB64 = (str) => btoa(unescape(encodeURIComponent(str)));
     const fromB64 = (str) => decodeURIComponent(escape(atob(str)));
 
@@ -196,7 +208,7 @@
         return (bytes / 1024).toFixed(2) + " KB";
     }
 
-    // Markdown 解析器設定
+    // --- Marked Configuration ---
     const renderer = new marked.Renderer();
     renderer.code = function({ text, lang }) {
         const validLang = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
@@ -209,7 +221,7 @@
                 <div class="code-header">
                     <div class="code-info">
                         <strong style="color:#fff">${validLang.toUpperCase()}</strong>
-                        <span>Len: ${text.length}</span>
+                        <span>Length: ${text.length}</span>
                         <span>Size: ${formatSize(text)}</span>
                     </div>
                     <div class="code-actions">
@@ -222,6 +234,7 @@
     };
     marked.setOptions({ renderer, breaks: true, gfm: true });
 
+    // --- 聊天邏輯 ---
     function loadHistory() {
         chatBox.innerHTML = '';
         history.forEach(msg => {
@@ -272,15 +285,16 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
             history.push({ role: 'assistant', content: full });
-            try { localStorage.setItem('chatHistory', JSON.stringify(history)); } catch(e){}
+            localStorage.setItem('chatHistory', JSON.stringify(history));
         } catch (e) {
-            if (e.name !== 'AbortError') aiDiv.innerHTML = `<div style="color:var(--alert-red)">[SYSTEM ERROR] ${e.message}</div>`;
+            if (e.name !== 'AbortError') aiDiv.innerHTML = `<span class="log-err">[SYSTEM ERROR] ${e.message}</span>`;
         } finally {
             isGenerating = false; userInput.disabled = false; userInput.focus();
             sendBtn.innerHTML = 'SEND'; sendBtn.classList.remove('stop-mode');
         }
     }
 
+    // --- Runner (JS/HTML 執行器) ---
     window.openRunner = function(b64, lang) {
         const code = fromB64(b64);
         hackerModal.style.display = 'flex';
@@ -288,39 +302,37 @@
         
         if (lang === 'html') {
             modalLabel.innerText = "HTML Preview";
-            modalContent.innerHTML = `<div style="color:#888">// Rendering HTML Output...</div><hr class="modal-hr">`;
+            modalContent.innerHTML = `<div style="color:#888">// Rendering HTML Document...</div><hr class="modal-hr">`;
             const ifr = document.createElement('iframe');
-            ifr.style.width = '100%'; ifr.style.height = '400px'; ifr.style.background = '#fff'; ifr.style.border = 'none';
+            ifr.style.width = '100%'; ifr.style.height = '450px'; ifr.style.background = '#fff'; ifr.style.border = 'none';
             modalContent.appendChild(ifr);
-            // 阻斷 fetch 的腳本，使用拆分字串避免解析錯誤
-            const sec = '<script>window.fetch=()=>Promise.reject("Blocked");<' + '/script>';
+            // 阻斷 fetch 的安全腳本
+            const sec = '<script>window.fetch=()=> { alert("Security: fetch() BLOCKED"); return Promise.reject(); };<' + '/script>';
             ifr.srcdoc = sec + code;
         } else {
             modalLabel.innerText = "JavaScript Console";
-            modalContent.innerHTML = `<div style="color:#888">// JS Sandbox Init... (fetch is BLOCKED)</div><hr class="modal-hr"><div id="js-logs"></div>`;
+            modalContent.innerHTML = `<div style="color:#888">// Initializing JS Sandbox... (fetch is BLOCKED)</div><hr class="modal-hr"><div id="js-logs"></div>`;
             const logBox = document.getElementById('js-logs');
             const logger = (m, err=false) => {
-                const l = document.createElement('div'); if(err) l.style.color='var(--alert-red)';
+                const l = document.createElement('div'); if(err) l.className = 'log-err';
                 l.textContent = (typeof m === 'object') ? JSON.stringify(m) : m;
                 logBox.appendChild(l);
+                modalContent.scrollTop = modalContent.scrollHeight;
             };
             try {
                 const fn = new Function('console', 'fetch', code);
                 fn({ log: logger, error: (m)=>logger(m,true), warn: logger }, ()=> { logger("fetch() BLOCKED", true); return Promise.reject(); });
-            } catch(e) { logger("Error: " + e.message, true); }
+            } catch(e) { logger("Runtime Error: " + e.message, true); }
         }
     };
 
-    window.copyLinkText = () => {
-        navigator.clipboard.writeText(document.getElementById('link-text').innerText);
-        document.querySelector('.copy-link-icon').innerText = "DONE";
-    };
     window.closeModal = () => { hackerModal.style.display = 'none'; };
     window.copyCode = (b64, btn) => {
         navigator.clipboard.writeText(fromB64(b64));
-        btn.innerText = 'COPIED'; setTimeout(()=> btn.innerText = 'COPY', 1500);
+        const old = btn.innerText; btn.innerText = 'COPIED';
+        setTimeout(()=> btn.innerText = old, 1500);
     };
-    window.deleteHistory = () => { if(confirm("Purge logs?")) { history=[]; localStorage.removeItem('chatHistory'); loadHistory(); } };
+    window.deleteHistory = () => { if(confirm("Clear all session logs?")) { history=[]; localStorage.removeItem('chatHistory'); loadHistory(); } };
     window.handleButtonClick = () => { if(isGenerating) abortController.abort(); else sendMessage(); };
     userInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
     window.onload = loadHistory;
