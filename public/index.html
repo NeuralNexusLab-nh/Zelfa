@@ -33,6 +33,7 @@
             overflow: hidden; 
         }
 
+        /* 掃描線特效 */
         body::before {
             content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
@@ -52,103 +53,87 @@
 
         #chat-box {
             flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column; gap: 25px; width: 100%;
+            display: flex; flex-direction: column; gap: 30px; width: 100%;
         }
+
+        /* 訊息容器 */
+        .msg-container { display: flex; flex-direction: column; gap: 8px; max-width: 100%; }
+        .msg-container.user { align-items: flex-end; }
+        .msg-container.ai { align-items: flex-start; }
 
         .msg { max-width: 100%; padding: 12px; line-height: 1.6; position: relative; }
         .msg-user {
-            align-self: flex-end; text-align: right; border-right: 2px solid var(--user-cyan);
+            text-align: right; border-right: 2px solid var(--user-cyan);
             color: var(--user-cyan); background: rgba(0, 255, 255, 0.05);
             max-width: 90%; white-space: pre-wrap; 
         }
         .msg-ai {
-            align-self: flex-start; border-left: 2px solid var(--term-green);
+            border-left: 2px solid var(--term-green);
             color: #ddd; background: rgba(0, 255, 65, 0.05); width: 100%; 
         }
 
-        /* 加載動畫 - 三個脈衝點 */
-        .loading-dots {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 0;
+        /* 修改模式下的輸入框 */
+        .edit-area {
+            width: 100%; background: #111; border: 1px solid var(--user-cyan);
+            color: var(--user-cyan); padding: 10px; font-family: inherit; font-size: 1rem;
+            outline: none; resize: vertical; min-height: 80px;
         }
-        .dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--term-green);
-            border-radius: 50%;
-            animation: dot-pulse 1.2s infinite ease-in-out;
+
+        /* 動作按鈕列 */
+        .msg-actions { display: flex; gap: 10px; opacity: 0.7; }
+        .msg-actions:hover { opacity: 1; }
+        .action-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.6); padding: 3px 8px; font-size: 0.7rem;
+            display: flex; align-items: center; gap: 5px; cursor: pointer;
+            transition: 0.2s;
         }
+        .action-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.1); }
+        .action-btn.btn-red { border-color: var(--alert-red); color: var(--alert-red); }
+        .action-btn.btn-red:hover { background: rgba(255, 51, 51, 0.2); }
+        .action-btn svg { width: 12px; height: 12px; fill: currentColor; }
+
+        /* 加載動畫 */
+        .loading-dots { display: flex; align-items: center; gap: 6px; padding: 10px 0; }
+        .dot { width: 8px; height: 8px; background-color: var(--term-green); border-radius: 50%; animation: dot-pulse 1.2s infinite ease-in-out; }
         .dot:nth-child(2) { animation-delay: 0.2s; }
         .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dot-pulse { 0%, 100% { transform: scale(0.5); opacity: 0.3; } 50% { transform: scale(1.2); opacity: 1; } }
 
-        @keyframes dot-pulse {
-            0%, 100% { transform: scale(0.5); opacity: 0.3; }
-            50% { transform: scale(1.2); opacity: 1; }
-        }
-
-        /* 表格白色框框 */
-        .msg-ai table {
-            border-collapse: collapse; width: 100%; margin: 15px 0; border: 1px solid #ffffff !important;
-        }
-        .msg-ai th, .msg-ai td {
-            border: 1px solid #ffffff !important; padding: 10px; text-align: left;
-        }
+        /* 表格樣式 */
+        .msg-ai table { border-collapse: collapse; width: 100%; margin: 15px 0; border: 1px solid #ffffff !important; }
+        .msg-ai th, .msg-ai td { border: 1px solid #ffffff !important; padding: 10px; text-align: left; }
         .msg-ai th { background-color: #222; color: var(--term-green); }
 
-        /* Code Block */
+        /* 代碼塊 */
         .code-block { margin: 15px 0; border: 1px solid #444; background: #1e1e1e; border-radius: 4px; overflow: hidden; }
-        .code-header {
-            background: #2d2d2d; padding: 6px 12px; display: flex; justify-content: space-between;
-            align-items: center; font-size: 0.75rem; color: #aaa; border-bottom: 1px solid #444;
-        }
+        .code-header { background: #2d2d2d; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #aaa; border-bottom: 1px solid #444; }
         .code-info { display: flex; gap: 15px; font-family: 'Consolas', monospace; }
-        .code-actions { display: flex; gap: 8px; }
         .code-btn { background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; cursor: pointer; font-size: 0.7rem; }
         .code-btn:hover { border-color: #fff; color: #fff; }
         .run-btn { color: var(--user-cyan) !important; border-color: var(--user-cyan) !important; font-weight: bold; }
 
-        pre { margin: 0; padding: 0; overflow-x: auto; border: none; }
-        code { font-family: 'Consolas', monospace; display: block; padding: 15px; }
-
-        #input-area {
-            border-top: var(--border); padding: 15px; display: flex; gap: 10px; background: #000;
-            z-index: 1000; flex-shrink: 0; min-height: 70px;
-        }
-        input[type="text"] {
-            flex: 1; background: #111; border: 1px solid #333; color: var(--term-green);
-            padding: 12px; font-family: inherit; outline: none; font-size: 16px;
-        }
+        #input-area { border-top: var(--border); padding: 15px; display: flex; gap: 10px; background: #000; z-index: 1000; flex-shrink: 0; min-height: 70px; }
+        input[type="text"] { flex: 1; background: #111; border: 1px solid #333; color: var(--term-green); padding: 12px; font-family: inherit; outline: none; font-size: 16px; }
         #send-btn { background: var(--term-green); font-weight: bold; color: #000; border: none; padding: 0 20px; cursor: pointer; }
         #send-btn.stop-mode { background: transparent; border: 1px solid var(--alert-red); color: var(--alert-red); }
 
+        /* 自定義彈窗 (Modal) */
+        .hacker-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; justify-content: center; align-items: center; }
+        .modal-win { width: 90%; max-width: 500px; background: #000; border: 2px solid var(--term-green); display: flex; flex-direction: column; box-shadow: 0 0 20px var(--term-dim); }
+        .modal-head { padding: 12px; background: #111; border-bottom: 1px solid var(--term-green); color: var(--term-green); font-weight: bold; }
+        .modal-body { padding: 20px; color: #fff; font-family: inherit; line-height: 1.5; }
+        .modal-foot { padding: 15px; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #222; }
+        .modal-btn { padding: 8px 20px; border: 1px solid var(--term-green); color: var(--term-green); background: transparent; cursor: pointer; font-family: inherit; }
+        .modal-btn:hover { background: var(--term-green); color: #000; }
+        .modal-btn.btn-red { border-color: var(--alert-red); color: var(--alert-red); }
+        .modal-btn.btn-red:hover { background: var(--alert-red); color: #fff; }
+
         /* 執行視窗 */
-        .hacker-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 99999; justify-content: center; align-items: center;
-        }
-        .modal-win {
-            width: 95%; max-width: 1000px; height: 90vh;
-            background: var(--console-bg); border: 2px solid var(--term-green);
-            display: flex; flex-direction: column; box-shadow: 0 0 25px var(--term-dim);
-        }
-        .modal-head {
-            padding: 12px; background: #111; border-bottom: 1px solid var(--term-green);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .modal-close { background: transparent; border: none; color: var(--alert-red); font-size: 1.8rem; cursor: pointer; font-weight: bold; }
-        .modal-body { flex: 1; display: flex; flex-direction: column; background: #000; overflow: hidden; }
-        
+        .runner-modal-win { width: 95%; max-width: 1000px; height: 90vh; }
+        .modal-body-full { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         #runner-frame { flex: 1; width: 100%; border: none; background: #fff; }
-        #console-log-area { 
-            height: 200px; background: #050505; border-top: 1px solid var(--term-dim); 
-            color: #ddd; font-family: 'Consolas', monospace; font-size: 0.85rem;
-            overflow-y: auto; padding: 10px;
-        }
-        .modal-hr { border: 0; border-top: 1px dashed #444; margin: 10px 0; }
-        .log-err { color: var(--alert-red); font-weight: bold; }
-        .log-warn { color: #ffaa00; }
+        #console-log-area { height: 150px; background: #050505; border-top: 1px solid var(--term-dim); color: #ddd; font-family: 'Consolas', monospace; font-size: 0.8rem; overflow-y: auto; padding: 10px; }
     </style>
 </head>
 <body>
@@ -176,7 +161,7 @@
         <option value="gpt-5-nano">✨ GPT 5 Nano (OpenAI Flex)</option> 
         <option value="gpt-5-mini">✨ GPT 5 Mini (OpenAI Flex)</option>
     </select>
-    <button onclick="deleteHistory()" style="color:var(--alert-red); border-color:var(--alert-red);">PURGE LOGS</button>
+    <button onclick="confirmPurge()" style="color:var(--alert-red); border-color:var(--alert-red);">PURGE LOGS</button>
 </header>
 
 <div id="chat-box"></div>
@@ -186,17 +171,29 @@
     <button id="send-btn" onclick="handleButtonClick()">SEND</button>
 </div>
 
-<!-- 改進的執行視窗 -->
-<div id="hacker-modal" class="hacker-modal">
+<!-- 自定義通用彈窗 -->
+<div id="custom-modal" class="hacker-modal">
     <div class="modal-win">
+        <div class="modal-head" id="modal-title">SYSTEM PROMPT</div>
+        <div class="modal-body" id="modal-body-text">Confirm action?</div>
+        <div class="modal-foot" id="modal-actions">
+            <button class="modal-btn" id="modal-cancel">CANCEL</button>
+            <button class="modal-btn btn-red" id="modal-confirm">EXECUTE</button>
+        </div>
+    </div>
+</div>
+
+<!-- 執行視窗 -->
+<div id="runner-modal" class="hacker-modal">
+    <div class="modal-win runner-modal-win">
         <div class="modal-head">
             <div style="display:flex; align-items:center; gap:10px; color:var(--term-green);">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                <span id="modal-label" style="font-weight:bold; letter-spacing:1px;">Runner Console</span>
+                <span id="runner-label">Runner Console</span>
             </div>
-            <button class="modal-close" onclick="closeModal()">×</button>
+            <button class="modal-close" onclick="closeRunner()">×</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body-full">
             <iframe id="runner-frame"></iframe>
             <div id="console-log-area"></div>
         </div>
@@ -208,10 +205,15 @@
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const modelSelect = document.getElementById('model-select');
-    const hackerModal = document.getElementById('hacker-modal');
-    const modalLabel = document.getElementById('modal-label');
+    const runnerModal = document.getElementById('runner-modal');
     const runnerFrame = document.getElementById('runner-frame');
     const consoleLogArea = document.getElementById('console-log-area');
+    
+    const customModal = document.getElementById('custom-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBodyText = document.getElementById('modal-body-text');
+    const modalConfirmBtn = document.getElementById('modal-confirm');
+    const modalCancelBtn = document.getElementById('modal-cancel');
 
     let history = [];
     try { history = JSON.parse(localStorage.getItem('chatHistory')) || []; } catch (e) {}
@@ -219,6 +221,12 @@
     let isGenerating = false;
     let isStopped = false; 
     let abortController = null;
+
+    // --- SVG Icons ---
+    const ICON_COPY = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+    const ICON_EDIT = `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+    const ICON_DELETE = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
+    const ICON_SEND = `<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
 
     const getB64 = (str) => btoa(unescape(encodeURIComponent(str)));
     const fromB64 = (str) => decodeURIComponent(escape(atob(str)));
@@ -229,6 +237,24 @@
         return (bytes / 1024).toFixed(2) + " KB";
     }
 
+    // --- 自定義彈窗邏輯 ---
+    function showAlert(title, message, isConfirm = false, onConfirm = null) {
+        modalTitle.innerText = title;
+        modalBodyText.innerText = message;
+        modalConfirmBtn.innerText = isConfirm ? "EXECUTE" : "OK";
+        modalCancelBtn.style.display = isConfirm ? "block" : "none";
+        customModal.style.display = "flex";
+
+        modalConfirmBtn.onclick = () => {
+            customModal.style.display = "none";
+            if (onConfirm) onConfirm();
+        };
+        modalCancelBtn.onclick = () => {
+            customModal.style.display = "none";
+        };
+    }
+
+    // --- 核心渲染與動作 ---
     const renderer = new marked.Renderer();
     renderer.code = function({ text, lang }) {
         const validLang = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
@@ -240,8 +266,8 @@
             <div class="code-block">
                 <div class="code-header">
                     <div class="code-info">
-                        <strong style="color:#fff">${validLang.toUpperCase()}</strong>
-                        <span>Length: ${text.length}</span>
+                        <strong>${validLang.toUpperCase()}</strong>
+                        <span>Len: ${text.length}</span>
                         <span>Size: ${formatSize(text)}</span>
                     </div>
                     <div class="code-actions">
@@ -256,37 +282,126 @@
 
     function loadHistory() {
         chatBox.innerHTML = '';
-        history.forEach(msg => {
-            const div = document.createElement('div');
-            div.className = `msg ${msg.role === 'user' ? 'msg-user' : 'msg-ai'}`;
-            if (msg.role === 'user') div.textContent = msg.content;
-            else div.innerHTML = marked.parse(msg.content);
-            chatBox.appendChild(div);
+        history.forEach((msg, index) => {
+            addMessageToUI(msg, index);
         });
-        chatBox.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
+    function addMessageToUI(msg, index) {
+        const container = document.createElement('div');
+        container.className = `msg-container ${msg.role === 'user' ? 'user' : 'ai'}`;
+        container.id = `msg-cnt-${index}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = `msg msg-${msg.role === 'user' ? 'user' : 'ai'}`;
+        
+        if (msg.role === 'user') {
+            bubble.textContent = msg.content;
+        } else {
+            bubble.innerHTML = marked.parse(msg.content);
+            bubble.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+        }
+
+        const actions = document.createElement('div');
+        actions.className = 'msg-actions';
+
+        // Copy Button
+        const btnCopy = createActionBtn(ICON_COPY, "Copy", () => {
+            navigator.clipboard.writeText(msg.content);
+            showAlert("SUCCESS", "Content copied to clipboard.");
+        });
+        actions.appendChild(btnCopy);
+
+        // Edit Button (User Only)
+        if (msg.role === 'user') {
+            const btnEdit = createActionBtn(ICON_EDIT, "Edit", () => enterEditMode(index));
+            actions.appendChild(btnEdit);
+        }
+
+        // Delete Button
+        const btnDel = createActionBtn(ICON_DELETE, "Delete", () => {
+            showAlert("CONFIRMATION", "Purge this message from history?", true, () => {
+                history.splice(index, 1);
+                saveAndReload();
+            });
+        }, true);
+        actions.appendChild(btnDel);
+
+        container.appendChild(bubble);
+        container.appendChild(actions);
+        chatBox.appendChild(container);
+    }
+
+    function createActionBtn(icon, label, onClick, isRed = false) {
+        const btn = document.createElement('button');
+        btn.className = `action-btn ${isRed ? 'btn-red' : ''}`;
+        btn.innerHTML = `${icon} ${label}`;
+        btn.onclick = onClick;
+        return btn;
+    }
+
+    // --- 修改訊息功能 ---
+    function enterEditMode(index) {
+        const container = document.getElementById(`msg-cnt-${index}`);
+        const bubble = container.querySelector('.msg');
+        const originalContent = history[index].content;
+
+        bubble.innerHTML = '';
+        const textarea = document.createElement('textarea');
+        textarea.className = 'edit-area';
+        textarea.value = originalContent;
+        
+        const saveRow = document.createElement('div');
+        saveRow.style.cssText = "display:flex; gap:10px; margin-top:10px; width:100%; justify-content:flex-end;";
+        
+        const btnResend = createActionBtn(ICON_SEND, "RESEND", () => {
+            const newText = textarea.value.trim();
+            if (!newText) return;
+            // 刪除此訊息之後的所有內容並重新發送
+            history = history.slice(0, index);
+            userInput.value = newText;
+            saveAndReload();
+            sendMessage();
+        });
+        
+        const btnCancel = createActionBtn(ICON_DELETE, "CANCEL", () => loadHistory());
+
+        saveRow.appendChild(btnCancel);
+        saveRow.appendChild(btnResend);
+        bubble.appendChild(textarea);
+        bubble.appendChild(saveRow);
+        textarea.focus();
+    }
+
+    function saveAndReload() {
+        localStorage.setItem('chatHistory', JSON.stringify(history));
+        loadHistory();
+    }
+
+    // --- 發送與中斷 ---
     async function sendMessage() {
         const text = userInput.value.trim();
         if (!text || isGenerating) return;
 
         isGenerating = true;
-        isStopped = false; // 重置停止狀態
+        isStopped = false;
         abortController = new AbortController();
         userInput.value = ''; userInput.disabled = true;
         sendBtn.innerHTML = 'STOP'; sendBtn.classList.add('stop-mode');
 
-        const uDiv = document.createElement('div');
-        uDiv.className = 'msg msg-user'; uDiv.textContent = text;
-        chatBox.appendChild(uDiv);
-        history.push({ role: 'user', content: text });
+        const userMsg = { role: 'user', content: text };
+        history.push(userMsg);
+        addMessageToUI(userMsg, history.length - 1);
 
-        const aiDiv = document.createElement('div');
-        aiDiv.className = 'msg msg-ai'; 
-        // 初始狀態：顯示三個脈衝點
-        aiDiv.innerHTML = `<div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
-        chatBox.appendChild(aiDiv);
+        const aiIndex = history.length;
+        const aiContainer = document.createElement('div');
+        aiContainer.className = 'msg-container ai';
+        const aiBubble = document.createElement('div');
+        aiBubble.className = 'msg msg-ai';
+        aiBubble.innerHTML = `<div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+        aiContainer.appendChild(aiBubble);
+        chatBox.appendChild(aiContainer);
         chatBox.scrollTop = chatBox.scrollHeight;
 
         let full = "";
@@ -303,32 +418,28 @@
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                
                 const chunk = decoder.decode(value, { stream: true });
                 
-                // 如果已經停止，就直接忽略剩下的 chunk
-                if (isStopped) continue; 
+                if (isStopped) break; // 中斷點
 
                 full += chunk;
-                // 一旦有了內容，就移除 loading 動畫
-                aiDiv.innerHTML = marked.parse(full);
-                aiDiv.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+                aiBubble.innerHTML = marked.parse(full);
+                aiBubble.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
-
-            if (!isStopped) {
-                history.push({ role: 'assistant', content: full });
-                localStorage.setItem('chatHistory', JSON.stringify(history));
-            } else {
-                // 如果是被中斷的，在 UI 上加個註記
-                aiDiv.innerHTML += `<br/><span style="color:var(--alert-red)">[CONNECTION TERMINATED BY USER]</span>`;
-            }
-
         } catch (e) {
-            if (e.name !== 'AbortError' && !isStopped) {
-                aiDiv.innerHTML = `<span class="log-err">[SYSTEM ERROR] ${e.message}</span>`;
+            if (e.name !== 'AbortError') {
+                aiBubble.innerHTML = `<span class="log-err">[SYSTEM ERROR] ${e.message}</span>`;
             }
         } finally {
+            // 無論是否中斷，都將已接收內容存入歷史
+            const finalContent = isStopped ? full + "\n\n[CONNECTION TERMINATED BY USER]" : full;
+            history.push({ role: 'assistant', content: finalContent });
+            localStorage.setItem('chatHistory', JSON.stringify(history));
+            
+            // 重新加載最後一條訊息以加入動作按鈕
+            loadHistory();
+
             isGenerating = false;
             isStopped = false;
             userInput.disabled = false;
@@ -338,76 +449,60 @@
         }
     }
 
-    // --- 改進的 Runner 邏輯 (支援全功能 JS & 開放 Fetch) ---
-    window.openRunner = function(b64, lang) {
-        const code = fromB64(b64);
-        hackerModal.style.display = 'flex';
-        consoleLogArea.innerHTML = `<div style="color:#888">// Initializing Runtime...</div><hr class="modal-hr">`;
-        
-        // 建立橋接 console.log 的腳本
-        const bridgeScript = `
-            <script>
-                const _log = (m, type='info') => {
-                    window.parent.postMessage({ type: 'console', method: type, content: m }, '*');
-                };
-                console.log = (...args) => _log(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'info');
-                console.error = (...args) => _log(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'error');
-                console.warn = (...args) => _log(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '), 'warn');
-                
-                window.onerror = (m, s, l, c, e) => {
-                    console.error("Runtime Error: " + m + " at line " + l);
-                };
-            <\/script>
-        `;
-
-        if (lang === 'html') {
-            modalLabel.innerText = "HTML Preview + Console";
-            runnerFrame.srcdoc = bridgeScript + code;
+    window.handleButtonClick = () => { 
+        if(isGenerating) {
+            isStopped = true;
+            if(abortController) abortController.abort();
         } else {
-            modalLabel.innerText = "JavaScript Console Environment";
-            // JS 模式下，我們建立一個空白 HTML 來執行它，這讓它擁有完整的 window/document
-            runnerFrame.srcdoc = bridgeScript + `
-                <body style="background:#fff; font-family:sans-serif; padding:20px;">
-                    <h3>JS Execution Environment</h3>
-                    <p>Open Console below to see output.</p>
-                    <script>${code}<\/script>
-                </body>
-            `;
+            sendMessage();
         }
     };
 
-    // 監聽來自 iframe 的 console 訊息
+    function confirmPurge() {
+        showAlert("DANGER ZONE", "This will wipe all locally stored logs. Proceed?", true, () => {
+            history = [];
+            saveAndReload();
+            showAlert("SYSTEM", "Data purged successfully.");
+        });
+    }
+
+    // --- Runner 邏輯 ---
+    window.openRunner = function(b64, lang) {
+        const code = fromB64(b64);
+        runnerModal.style.display = 'flex';
+        consoleLogArea.innerHTML = `<div style="color:#888">// Initializing Environment...</div><hr class="modal-hr">`;
+        
+        const bridge = `<script>
+            const _l = (m, t='info') => window.parent.postMessage({ type: 'console', method: t, content: m }, '*');
+            console.log = (...a) => _l(a.map(x => typeof x==='object'?JSON.stringify(x):x).join(' '), 'info');
+            console.error = (...a) => _l(a.map(x => typeof x==='object'?JSON.stringify(x):x).join(' '), 'error');
+            window.onerror = (m, s, l) => console.error(m + " at line " + l);
+        <\/script>`;
+
+        if (lang === 'html') {
+            document.getElementById('runner-label').innerText = "HTML Preview";
+            runnerFrame.srcdoc = bridge + code;
+        } else {
+            document.getElementById('runner-label').innerText = "JavaScript Sandbox";
+            runnerFrame.srcdoc = bridge + `<body style="padding:20px; font-family:sans-serif;"><h3>JS Execution Result</h3><p>Console active below.</p><script>${code}<\/script></body>`;
+        }
+    };
+
     window.addEventListener('message', (e) => {
         if (e.data.type === 'console') {
             const l = document.createElement('div');
             if(e.data.method === 'error') l.className = 'log-err';
-            if(e.data.method === 'warn') l.className = 'log-warn';
             l.textContent = `[${e.data.method.toUpperCase()}] ${e.data.content}`;
             consoleLogArea.appendChild(l);
             consoleLogArea.scrollTop = consoleLogArea.scrollHeight;
         }
     });
 
-    window.closeModal = () => { 
-        hackerModal.style.display = 'none'; 
-        runnerFrame.srcdoc = ''; // 清空內容以釋放資源
-    };
-    
+    window.closeRunner = () => { runnerModal.style.display = 'none'; runnerFrame.srcdoc = ''; };
     window.copyCode = (b64, btn) => {
         navigator.clipboard.writeText(fromB64(b64));
         const old = btn.innerText; btn.innerText = 'COPIED';
         setTimeout(()=> btn.innerText = old, 1500);
-    };
-
-    window.deleteHistory = () => { if(confirm("Purge all logs?")) { history=[]; localStorage.removeItem('chatHistory'); loadHistory(); } };
-    
-    window.handleButtonClick = () => { 
-        if(isGenerating) {
-            isStopped = true; // 設置忽略旗標
-            if(abortController) abortController.abort(); // 同時嘗試切斷 fetch
-        } else {
-            sendMessage();
-        }
     };
 
     userInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
