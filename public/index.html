@@ -11,12 +11,12 @@
     
     <style id="theme-style">
         :root {
-            /* Header 固定顏色 (強制黑底綠字) */
+            /* Header 固定顏色 */
             --header-bg: #000000;
             --header-green: #00ff41;
             --alert-red: #ff3333;
             
-            /* 動態切換的變數 (預設 Terminal) */
+            /* 動態切換變數 (預設 Terminal) */
             --bg: #050505;
             --term-color: #00ff41;
             --text-main: #dddddd;
@@ -36,7 +36,6 @@
             height: 100dvh; width: 100vw; display: flex; flex-direction: column;
             overflow: hidden; transition: background-color 0.2s, color 0.2s;
         }
-        /* 掃描線效果 */
         body::before {
             content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
@@ -63,14 +62,11 @@
         .msg-container.ai { align-items: flex-start; }
 
         .msg { max-width: 100%; padding: 15px; line-height: 1.6; position: relative; }
-        
-        /* 使用者：右側粗線 */
         .msg-user { text-align: right; border-right: 4px solid var(--user-cyan); color: var(--user-cyan); background: var(--bubble-user-bg); max-width: 90%; white-space: pre-wrap; }
-        /* AI：左側粗線 */
         .msg-ai { border-left: 4px solid var(--term-color); color: var(--text-main); background: var(--bubble-ai-bg); width: 100%; }
 
-        /* 訊息按鈕 (純圖示) */
-        .msg-actions { display: flex; gap: 10px; opacity: 0.4; transition: 0.3s; margin-top: 4px; }
+        /* 動作按鈕 (純圖標) */
+        .msg-actions { display: flex; gap: 8px; opacity: 0.4; transition: 0.3s; margin-top: 4px; }
         .msg-actions:hover { opacity: 1; }
         .action-btn {
             background: transparent; border: 1px solid var(--term-color);
@@ -82,10 +78,9 @@
         .action-btn.btn-red { border-color: var(--alert-red); color: var(--alert-red); }
         .action-btn.btn-red:hover { background: var(--alert-red); color: #fff; }
 
-        /* 修改模式 Textarea */
         .edit-area { width: 100%; background: var(--edit-bg); border: 1px solid var(--user-cyan); color: var(--user-cyan); padding: 12px; font-family: inherit; font-size: 1rem; outline: none; resize: vertical; min-height: 100px; }
 
-        /* Code Block Sticky Header */
+        /* Code Block Sticky & Icon Style */
         .code-block { margin: 20px 0; border: 1px solid var(--border-main); background: #1e1e1e; border-radius: 4px; }
         .code-header {
             background: #2d2d2d; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;
@@ -93,27 +88,32 @@
         }
         .code-info { display: flex; gap: 25px; font-family: 'Consolas', monospace; }
         .code-btn { 
-            background: #444; border: 1px solid #666; color: #fff; padding: 5px 15px; 
-            cursor: pointer; font-weight: bold; font-size: 0.75rem; border-radius: 4px;
+            background: #444; border: 1px solid #666; color: #fff; padding: 6px; 
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border-radius: 4px;
         }
-        .code-btn:hover { background: var(--header-green); color: #000; border-color: #fff; }
+        .code-btn svg { width: 18px; height: 18px; fill: currentColor; }
+        .code-btn:hover { background: var(--header-green); color: #000; }
+        .run-text-btn { 
+            background: transparent; border: 1px solid var(--user-cyan); color: var(--user-cyan);
+            padding: 0 12px; height: 32px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 0.7rem;
+        }
+        .run-text-btn:hover { background: var(--user-cyan); color: #000; }
 
         pre { margin: 0; padding: 0; overflow-x: auto; }
         code { font-family: 'Consolas', monospace; display: block; padding: 15px; }
 
-        /* 加載脈衝動畫 */
+        /* 加載動畫 */
         .loading-dots { display: flex; align-items: center; gap: 6px; padding: 10px 0; }
         .dot { width: 8px; height: 8px; background-color: var(--term-color); border-radius: 50%; animation: dot-pulse 1.2s infinite ease-in-out; }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
         @keyframes dot-pulse { 0%, 100% { transform: scale(0.5); opacity: 0.3; } 50% { transform: scale(1.2); opacity: 1; } }
 
-        /* 表格樣式 */
+        /* 表格固定白色框 */
         .msg-ai table { border-collapse: collapse; width: 100%; margin: 15px 0; border: 1px solid #ffffff !important; }
         .msg-ai th, .msg-ai td { border: 1px solid #ffffff !important; padding: 10px; text-align: left; color: #fff; }
         .msg-ai th { background-color: #222; }
 
-        /* 輸入區 (大邊距 & 圓角) */
+        /* 下方輸入區 (5倍邊距感 & 圓角) */
         #input-area { border-top: 1px solid var(--border-main); padding: 25px 40px; display: flex; gap: 15px; background: #000; z-index: 1000; flex-shrink: 0; align-items: flex-end; }
         #user-input { 
             flex: 1; background: #111; border: 1px solid var(--border-main); 
@@ -124,7 +124,7 @@
         #send-btn { height: 56px; background: var(--header-green); font-weight: bold; color: #000; border: none; padding: 0 25px; cursor: pointer; border-radius: 15px; }
         #send-btn.stop-mode { background: transparent; border: 1px solid var(--alert-red); color: var(--alert-red); }
 
-        /* 自定義彈窗元件 */
+        /* 彈窗 */
         .hacker-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; justify-content: center; align-items: center; }
         .modal-win { width: 90%; max-width: 500px; background: #000; border: 2px solid var(--header-green); display: flex; flex-direction: column; }
         .modal-head { padding: 12px; background: #111; border-bottom: 1px solid var(--header-green); color: var(--header-green); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
@@ -132,12 +132,11 @@
         .modal-foot { padding: 15px; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #222; }
         .modal-btn { padding: 8px 20px; border: 1px solid var(--header-green); color: var(--header-green); background: transparent; cursor: pointer; font-family: inherit; }
 
-        /* Runner Modal 特化 */
+        /* Runner Modal */
         .runner-modal-win { width: 95%; max-width: 1200px; height: 90vh; }
-        .runner-close-btn { color: var(--alert-red); font-size: 2.5rem; cursor: pointer; padding: 0 15px; line-height: 1; }
+        .runner-close-btn { color: var(--alert-red); font-size: 3rem; cursor: pointer; padding: 0 20px; line-height: 0.8; transition: 0.2s; }
         .runner-close-btn:hover { color: #fff; }
-        .runner-run-btn { color: var(--user-cyan); cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: bold; }
-        .runner-run-btn:hover { color: #fff; }
+        .runner-run-btn { color: var(--user-cyan); cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; padding-left: 10px; }
     </style>
 </head>
 <body>
@@ -178,7 +177,7 @@
     <button id="send-btn" onclick="handleButtonClick()">SEND</button>
 </div>
 
-<!-- 自定義通用 Prompt 彈窗 -->
+<!-- Custom Confirm Modal -->
 <div id="custom-modal" class="hacker-modal">
     <div class="modal-win">
         <div class="modal-head" id="modal-title">SYSTEM PROMPT</div>
@@ -190,7 +189,7 @@
     </div>
 </div>
 
-<!-- Runner 全功能沙盒彈窗 -->
+<!-- Runner Modal -->
 <div id="runner-modal" class="hacker-modal">
     <div class="modal-win runner-modal-win">
         <div class="modal-head">
@@ -209,13 +208,14 @@
 </div>
 
 <script>
-    // --- SVG Icons ---
+    // --- Icons ---
     const ICON_COPY = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+    const ICON_CHECK = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
     const ICON_EDIT = `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
     const ICON_DELETE = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
     const ICON_SEND = `<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
 
-    // --- 主題系統 ---
+    // --- State ---
     const stylesMap = {
         terminal: { bg: '#050505', term: '#00ff41', text: '#dddddd', border: '#333333', bubbleAi: 'rgba(127, 127, 127, 0.05)', bubbleUser: 'rgba(0, 255, 255, 0.05)', userCyan: '#0ff', editBg: '#111' },
         dark:     { bg: '#050505', term: '#ffffff', text: '#ffffff', border: '#444444', bubbleAi: 'rgba(255, 255, 255, 0.1)', bubbleUser: 'rgba(255, 255, 255, 0.1)', userCyan: '#fff', editBg: '#1a1a1a' },
@@ -239,7 +239,6 @@
         root.style.setProperty('--bubble-user-bg', s.bubbleUser);
         root.style.setProperty('--user-cyan', s.userCyan);
         root.style.setProperty('--edit-bg', s.editBg);
-        
         document.getElementById('style-btn').innerText = `STYLE: ${name}`;
         localStorage.setItem('chatStyle', name);
         if(chatBox.innerHTML !== "") loadHistory(false); 
@@ -260,11 +259,11 @@
     const fromB64 = (s) => decodeURIComponent(escape(atob(s)));
     const formatSize = (s) => { const b = new Blob([s]).size; return b < 1024 ? b + " B" : (b/1024).toFixed(2) + " KB"; };
 
-    // --- Textarea Logic ---
+    // --- Textarea ---
     userInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; });
     userInput.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
-    // --- Marked Configuration ---
+    // --- Renderer ---
     const renderer = new marked.Renderer();
     renderer.code = function({ text, lang }) {
         const validLang = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
@@ -274,9 +273,9 @@
         return `<div class="code-block">
             <div class="code-header">
                 <div class="code-info"><strong style="color:var(--header-green)">${validLang.toUpperCase()}</strong><span>Length: ${text.length}</span><span>Size: ${formatSize(text)}</span></div>
-                <div class="code-actions">
-                    ${runnable ? `<button class="code-btn" onclick="openRunner('${b64}', '${validLang.toLowerCase()}')" style="color:var(--user-cyan)">RUN</button>` : ''}
-                    <button class="code-btn" onclick="copyCode('${b64}', this)">COPY</button>
+                <div class="code-actions" style="display:flex; gap:10px; align-items:center;">
+                    ${runnable ? `<button class="run-text-btn" onclick="openRunner('${b64}', '${validLang.toLowerCase()}')">RUN</button>` : ''}
+                    <button class="code-btn" onclick="copyCode('${b64}', this)">${ICON_COPY}</button>
                 </div>
             </div>
             <pre><code class="hljs language-${validLang}">${highlighted}</code></pre>
@@ -285,11 +284,11 @@
     marked.setOptions({ renderer, breaks: true, gfm: true });
 
     function loadHistory(shouldScroll = true) {
-        const currentScroll = chatBox.scrollTop;
+        const currentPos = chatBox.scrollTop;
         chatBox.innerHTML = '';
         history.forEach((msg, i) => addMessageToUI(msg, i));
         if (shouldScroll) chatBox.scrollTop = chatBox.scrollHeight;
-        else chatBox.scrollTop = currentScroll;
+        else chatBox.scrollTop = currentPos;
     }
 
     function addMessageToUI(msg, i) {
@@ -303,7 +302,12 @@
         
         const actions = document.createElement('div');
         actions.className = 'msg-actions';
-        actions.appendChild(createIconBtn(ICON_COPY, () => { navigator.clipboard.writeText(msg.content); showAlert("SUCCESS", "Copied."); }));
+        actions.appendChild(createIconBtn(ICON_COPY, (btn) => { 
+            navigator.clipboard.writeText(msg.content);
+            const original = btn.innerHTML;
+            btn.innerHTML = ICON_CHECK;
+            setTimeout(() => btn.innerHTML = original, 1500);
+        }));
         if (msg.role === 'user') actions.appendChild(createIconBtn(ICON_EDIT, () => enterEditMode(i)));
         actions.appendChild(createIconBtn(ICON_DELETE, () => { confirmAction = () => { history.splice(i, 1); saveAndReload(); }; showPrompt("CONFIRM", "Purge this message?"); }, true));
         
@@ -316,7 +320,7 @@
         const btn = document.createElement('button');
         btn.className = `action-btn ${isRed ? 'btn-red' : ''}`;
         btn.innerHTML = svg;
-        btn.onclick = onClick;
+        btn.onclick = () => onClick(btn);
         return btn;
     }
 
@@ -368,13 +372,11 @@
         }
     }
 
-    // --- Modal Logic ---
+    // --- Modals ---
     let confirmAction = null;
     function showPrompt(title, text) { document.getElementById('modal-title').innerText = title; document.getElementById('modal-body-text').innerText = text; document.getElementById('custom-modal').style.display = 'flex'; }
     function closeAlert(confirm) { document.getElementById('custom-modal').style.display = 'none'; if(confirm && confirmAction) confirmAction(); confirmAction = null; }
-    function showAlert(title, text) { confirmAction = null; document.getElementById('modal-title').innerText = title; document.getElementById('modal-body-text').innerText = text; document.getElementById('custom-modal').style.display = 'flex'; }
 
-    // --- Runner Logic ---
     window.openRunner = function(b64, lang) { currentRunnerData = { b64, lang }; document.getElementById('runner-modal').style.display = 'flex'; executeRunner(); };
     function executeRunner() {
         const { b64, lang } = currentRunnerData;
@@ -387,7 +389,7 @@
             console.error = (...a) => _l(a.map(x => typeof x==='object'?JSON.stringify(x):x).join(' '), 'error');
         <\/script>`;
         const ifr = document.getElementById('runner-frame');
-        ifr.srcdoc = lang === 'html' ? bridge + code : bridge + `<body style="padding:20px; font-family:sans-serif;"><h3>JS Sandbox Result</h3><script>${code}<\/script></body>`;
+        ifr.srcdoc = lang === 'html' ? bridge + code : bridge + `<body style="padding:20px; font-family:sans-serif;"><h3>JS Sandbox</h3><script>${code}<\/script></body>`;
     }
     document.getElementById('modal-rerun-btn').onclick = executeRunner;
 
@@ -400,7 +402,14 @@
     });
 
     window.closeRunner = () => { document.getElementById('runner-modal').style.display = 'none'; document.getElementById('runner-frame').srcdoc = ''; };
-    window.copyCode = (b64, btn) => { navigator.clipboard.writeText(fromB64(b64)); btn.innerText = 'COPIED'; setTimeout(()=> btn.innerText = 'COPY', 1500); };
+    
+    window.copyCode = (b64, btn) => { 
+        navigator.clipboard.writeText(fromB64(b64)); 
+        const original = btn.innerHTML;
+        btn.innerHTML = ICON_CHECK;
+        setTimeout(()=> btn.innerHTML = original, 1500); 
+    };
+
     function confirmPurge() { confirmAction = () => { history = []; saveAndReload(); }; showPrompt("DANGER", "Clear all session history?"); }
     window.handleButtonClick = () => { if(isGenerating) { isStopped = true; if(abortController) abortController.abort(); } else sendMessage(); };
     window.onload = () => { applyStyle(currentStyle); loadHistory(); };
