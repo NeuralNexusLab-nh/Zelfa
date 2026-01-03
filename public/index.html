@@ -12,14 +12,11 @@
     
     <style id="theme-style">
         :root {
-            /* Header 固定顏色 */
             --header-bg: #000000;
             --header-green: #00ff41;
-            
-            /* 全局固定色 */
             --alert-red: #ff3333;
             
-            /* Style 變動變數 */
+            /* 預設 Style: Terminal */
             --bg: #050505;
             --term-color: #00ff41;
             --text-main: #dddddd;
@@ -27,6 +24,7 @@
             --bubble-ai-bg: rgba(127, 127, 127, 0.05);
             --bubble-user-bg: rgba(0, 255, 255, 0.05);
             --user-cyan: #0ff;
+            --edit-bg: #111;
         }
     </style>
 
@@ -50,7 +48,6 @@
             z-index: 9999; background-size: 100% 2px, 3px 100%; pointer-events: none;
         }
 
-        /* --- Header 固定樣式 (強制黑底綠字) --- */
         header {
             padding: 10px 15px; border-bottom: 1px solid #333;
             display: flex; justify-content: space-between; align-items: center;
@@ -62,92 +59,89 @@
             border: 1px solid var(--header-green) !important;
             padding: 5px; font-family: inherit; cursor: pointer; outline: none;
         }
-        header button#purge-btn { border-color: var(--alert-red) !important; color: var(--alert-red) !important; }
 
-        /* --- 聊天區域 --- */
-        #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 30px; width: 100%; }
+        #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 35px; width: 100%; }
 
         .msg-container { display: flex; flex-direction: column; gap: 8px; max-width: 100%; }
         .msg-container.user { align-items: flex-end; }
         .msg-container.ai { align-items: flex-start; }
 
-        .msg { max-width: 100%; padding: 12px; line-height: 1.6; position: relative; border: none; }
-        
-        /* 使用者訊息：只有右側有加粗線 */
+        .msg { max-width: 100%; padding: 15px; line-height: 1.6; position: relative; }
         .msg-user {
-            text-align: right; 
-            border-right: 4px solid var(--user-cyan);
-            color: var(--user-cyan); 
-            background: var(--bubble-user-bg);
+            text-align: right; border-right: 4px solid var(--user-cyan);
+            color: var(--user-cyan); background: var(--bubble-user-bg);
             max-width: 90%; white-space: pre-wrap; 
         }
-        
-        /* AI 訊息：只有左側有加粗線 */
         .msg-ai {
             border-left: 4px solid var(--term-color);
-            color: var(--text-main); 
-            background: var(--bubble-ai-bg); 
-            width: 100%; 
+            color: var(--text-main); background: var(--bubble-ai-bg); width: 100%; 
         }
 
-        /* 修改模式輸入框 */
+        /* 修改模式下的 Textarea */
         .edit-area {
-            width: 100%; background: #111; border: 1px solid var(--user-cyan);
-            color: var(--user-cyan); padding: 10px; font-family: inherit; font-size: 1rem;
-            outline: none; resize: vertical; min-height: 80px;
+            width: 100%; background: var(--edit-bg); border: 1px solid var(--user-cyan);
+            color: var(--user-cyan); padding: 12px; font-family: inherit; font-size: 1rem;
+            outline: none; resize: vertical; min-height: 100px;
         }
 
-        /* 動作按鈕列 */
-        .msg-actions { display: flex; gap: 10px; opacity: 0.6; }
+        .msg-actions { display: flex; gap: 12px; opacity: 0.5; margin-top: 4px; }
         .msg-actions:hover { opacity: 1; }
         .action-btn {
             background: transparent; border: 1px solid var(--term-color);
-            color: var(--term-color); padding: 3px 8px; font-size: 0.7rem;
-            display: flex; align-items: center; gap: 5px; cursor: pointer;
+            color: var(--term-color); padding: 4px 10px; font-size: 0.75rem;
+            display: flex; align-items: center; gap: 6px; cursor: pointer;
         }
         .action-btn:hover { background: var(--term-color); color: var(--bg); }
         .action-btn.btn-red { border-color: var(--alert-red); color: var(--alert-red); }
-        .action-btn.btn-red:hover { background: var(--alert-red); color: #fff; }
-        .action-btn svg { width: 12px; height: 12px; fill: currentColor; }
 
-        /* 加載動畫 (三點脈衝) */
-        .loading-dots { display: flex; align-items: center; gap: 6px; padding: 10px 0; }
-        .dot { width: 8px; height: 8px; background-color: var(--term-color); border-radius: 50%; animation: dot-pulse 1.2s infinite ease-in-out; }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes dot-pulse { 0%, 100% { transform: scale(0.5); opacity: 0.3; } 50% { transform: scale(1.2); opacity: 1; } }
-
-        /* 表格固定白色框線 */
-        .msg-ai table { border-collapse: collapse; width: 100%; margin: 15px 0; border: 1px solid #ffffff !important; }
-        .msg-ai th, .msg-ai td { border: 1px solid #ffffff !important; padding: 10px; text-align: left; color: #fff; }
-        .msg-ai th { background-color: #222; }
-
-        /* Code Block */
-        .code-block { margin: 15px 0; border: 1px solid var(--border-main); background: #1e1e1e; border-radius: 4px; overflow: hidden; }
-        .code-header { background: #2d2d2d; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #aaa; border-bottom: 1px solid #444; }
-        .code-btn { background: transparent; border: 1px solid #555; color: #aaa; padding: 2px 8px; cursor: pointer; font-size: 0.7rem; }
+        /* Code Block 黏連修復與 Sticky */
+        .code-block { margin: 20px 0; border: 1px solid var(--border-main); background: #1e1e1e; border-radius: 4px; position: relative; }
+        .code-header {
+            background: #2d2d2d; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.75rem; color: #aaa; border-bottom: 1px solid #444;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .code-info { display: flex; gap: 20px; font-family: 'Consolas', monospace; }
+        .code-btn { background: transparent; border: 1px solid #555; color: #aaa; padding: 3px 10px; cursor: pointer; }
         .code-btn:hover { border-color: #fff; color: #fff; }
 
-        /* 下方輸入區 (Style 影響) */
-        #input-area { border-top: 1px solid var(--border-main); padding: 15px; display: flex; gap: 10px; background: #000; z-index: 1000; flex-shrink: 0; min-height: 70px; }
-        input[type="text"] { flex: 1; background: #111; border: 1px solid var(--border-main); color: var(--header-green); padding: 12px; font-family: inherit; outline: none; font-size: 16px; }
-        #send-btn { background: var(--header-green); font-weight: bold; color: #000; border: none; padding: 0 20px; cursor: pointer; }
+        pre { margin: 0; padding: 0; overflow-x: auto; }
+        code { font-family: 'Consolas', monospace; display: block; padding: 15px; }
+
+        /* 脈衝加載 */
+        .loading-dots { display: flex; align-items: center; gap: 6px; padding: 10px 0; }
+        .dot { width: 8px; height: 8px; background-color: var(--term-color); border-radius: 50%; animation: dot-pulse 1.2s infinite ease-in-out; }
+        @keyframes dot-pulse { 0%, 100% { transform: scale(0.5); opacity: 0.3; } 50% { transform: scale(1.2); opacity: 1; } }
+
+        /* 輸入區加寬與多行支援 */
+        #input-area {
+            border-top: 1px solid var(--border-main);
+            padding: 25px 40px; /* 增加 5 倍邊距感 */
+            display: flex; gap: 15px; background: #000;
+            z-index: 1000; flex-shrink: 0; align-items: flex-end;
+        }
+        
+        #user-input {
+            flex: 1; background: #111; border: 1px solid var(--border-main);
+            color: var(--header-green); padding: 15px 20px; font-family: inherit;
+            outline: none; font-size: 16px; border-radius: 15px; /* 圓角 */
+            resize: none; min-height: 56px; max-height: 200px;
+            overflow-y: auto; line-height: 1.5;
+        }
+        
+        #send-btn { 
+            height: 56px; background: var(--header-green); font-weight: bold; 
+            color: #000; border: none; padding: 0 25px; cursor: pointer; border-radius: 15px;
+        }
         #send-btn.stop-mode { background: transparent; border: 1px solid var(--alert-red); color: var(--alert-red); }
 
-        /* 自定義彈窗 (Modal) */
+        /* 自定義彈窗 */
         .hacker-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; justify-content: center; align-items: center; }
-        .modal-win { width: 90%; max-width: 500px; background: #000; border: 2px solid var(--header-green); display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,255,65,0.3); }
+        .modal-win { width: 90%; max-width: 500px; background: #000; border: 2px solid var(--header-green); display: flex; flex-direction: column; }
         .modal-head { padding: 12px; background: #111; border-bottom: 1px solid var(--header-green); color: var(--header-green); font-weight: bold; }
-        .modal-body { padding: 20px; color: #fff; font-family: inherit; line-height: 1.5; }
+        .modal-body { padding: 20px; color: #fff; line-height: 1.5; }
         .modal-foot { padding: 15px; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #222; }
         .modal-btn { padding: 8px 20px; border: 1px solid var(--header-green); color: var(--header-green); background: transparent; cursor: pointer; }
-        .modal-btn:hover { background: var(--header-green); color: #000; }
-        .modal-btn.btn-red { border-color: var(--alert-red); color: var(--alert-red); }
-
-        /* Runner 彈窗 */
-        .runner-modal-win { width: 95%; max-width: 1000px; height: 90vh; }
-        #runner-frame { flex: 1; width: 100%; border: none; background: #fff; }
-        #console-log-area { height: 150px; background: #050505; border-top: 1px solid var(--header-green); color: #ddd; font-family: 'Consolas', monospace; overflow-y: auto; padding: 10px; }
     </style>
 </head>
 <body>
@@ -184,35 +178,32 @@
 <div id="chat-box"></div>
 
 <div id="input-area">
-    <input type="text" id="user-input" placeholder="Execute command..." autocomplete="off">
+    <textarea id="user-input" placeholder="Execute command... (SHIFT + ENTER to 換行)" rows="1"></textarea>
     <button id="send-btn" onclick="handleButtonClick()">SEND</button>
 </div>
 
-<!-- 自定義彈窗 -->
+<!-- Custom Modal -->
 <div id="custom-modal" class="hacker-modal">
     <div class="modal-win">
         <div class="modal-head" id="modal-title">SYSTEM PROMPT</div>
         <div class="modal-body" id="modal-body-text">Confirm action?</div>
         <div class="modal-foot">
             <button class="modal-btn" id="modal-cancel">CANCEL</button>
-            <button class="modal-btn btn-red" id="modal-confirm">EXECUTE</button>
+            <button class="modal-btn" style="border-color:var(--alert-red); color:var(--alert-red);" id="modal-confirm">EXECUTE</button>
         </div>
     </div>
 </div>
 
-<!-- Runner 彈窗 -->
+<!-- Runner Modal -->
 <div id="runner-modal" class="hacker-modal">
-    <div class="modal-win runner-modal-win">
+    <div style="width:95%; max-width:1100px; height:90vh; background:#000; border:2px solid var(--header-green); display:flex; flex-direction:column;">
         <div class="modal-head">
-            <div style="display:flex; align-items:center; gap:10px; color:var(--header-green);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                <span id="runner-label">Runner Console</span>
-            </div>
+            <div style="display:flex; align-items:center; gap:10px; color:var(--header-green);"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span id="runner-label">Runner Console</span></div>
             <button onclick="closeRunner()" style="background:transparent; border:none; color:var(--alert-red); cursor:pointer; font-size:1.8rem;">×</button>
         </div>
         <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
-            <iframe id="runner-frame"></iframe>
-            <div id="console-log-area"></div>
+            <iframe id="runner-frame" style="flex:1; background:#fff; border:none;"></iframe>
+            <div id="console-log-area" style="height:150px; background:#050505; border-top:1px solid var(--header-green); color:#ddd; font-family:monospace; overflow-y:auto; padding:10px;"></div>
         </div>
     </div>
 </div>
@@ -220,10 +211,10 @@
 <script>
     // --- Style 管理系統 ---
     const stylesMap = {
-        terminal: { bg: '#050505', term: '#00ff41', text: '#dddddd', border: '#333333', bubbleAi: 'rgba(127, 127, 127, 0.05)', bubbleUser: 'rgba(0, 255, 255, 0.05)', userCyan: '#0ff' },
-        dark:     { bg: '#050505', term: '#ffffff', text: '#ffffff', border: '#444444', bubbleAi: 'rgba(255, 255, 255, 0.1)', bubbleUser: 'rgba(0, 255, 255, 0.1)', userCyan: '#0ff' },
-        gray:     { bg: '#333333', term: '#ffffff', text: '#ffffff', border: '#ffffff', bubbleAi: '#222222', bubbleUser: '#222222', userCyan: '#0ff' },
-        white:    { bg: '#ffffff', term: '#000000', text: '#000000', border: '#000000', bubbleAi: '#f0f0f0', bubbleUser: '#f0f0f0', userCyan: '#008b8b' } 
+        terminal: { bg: '#050505', term: '#00ff41', text: '#dddddd', border: '#333333', bubbleAi: 'rgba(127, 127, 127, 0.05)', bubbleUser: 'rgba(0, 255, 255, 0.05)', userCyan: '#0ff', editBg: '#111' },
+        dark:     { bg: '#050505', term: '#ffffff', text: '#ffffff', border: '#444444', bubbleAi: 'rgba(255, 255, 255, 0.1)', bubbleUser: 'rgba(255, 255, 255, 0.1)', userCyan: '#fff', editBg: '#1a1a1a' },
+        gray:     { bg: '#333333', term: '#ffffff', text: '#ffffff', border: '#ffffff', bubbleAi: '#222222', bubbleUser: '#222222', userCyan: '#fff', editBg: '#222' },
+        white:    { bg: '#ffffff', term: '#000000', text: '#000000', border: '#000000', bubbleAi: '#f0f0f0', bubbleUser: '#f0f0f0', userCyan: '#000', editBg: '#eee' } 
     };
     
     let currentStyle = localStorage.getItem('chatStyle') || 'terminal';
@@ -238,6 +229,7 @@
         root.style.setProperty('--bubble-ai-bg', s.bubbleAi);
         root.style.setProperty('--bubble-user-bg', s.bubbleUser);
         root.style.setProperty('--user-cyan', s.userCyan);
+        root.style.setProperty('--edit-bg', s.editBg);
         
         document.getElementById('style-btn').innerText = `STYLE: ${name}`;
         localStorage.setItem('chatStyle', name);
@@ -251,48 +243,37 @@
         applyStyle(currentStyle);
     }
 
-    // --- 核心變數 ---
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const modelSelect = document.getElementById('model-select');
-    const runnerFrame = document.getElementById('runner-frame');
-    const consoleLogArea = document.getElementById('console-log-area');
-
+    
     let history = [];
     try { history = JSON.parse(localStorage.getItem('chatHistory')) || []; } catch (e) {}
 
-    let isGenerating = false;
-    let isStopped = false; 
-    let abortController = null;
+    let isGenerating = false, isStopped = false, abortController = null;
 
-    // --- Icons ---
-    const ICON_COPY = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
-    const ICON_EDIT = `<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
-    const ICON_DELETE = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
-    const ICON_SEND = `<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
-
+    // --- 安全處理與大小 ---
     const getB64 = (str) => btoa(unescape(encodeURIComponent(str)));
     const fromB64 = (str) => decodeURIComponent(escape(atob(str)));
-
     function formatSize(text) {
         const bytes = new Blob([text]).size;
-        if (bytes < 1024) return bytes + " B";
-        return (bytes / 1024).toFixed(2) + " KB";
+        return bytes < 1024 ? bytes + " B" : (bytes / 1024).toFixed(2) + " KB";
     }
 
-    function showAlert(title, message, isConfirm = false, onConfirm = null) {
-        document.getElementById('modal-title').innerText = title;
-        document.getElementById('modal-body-text').innerText = message;
-        const confirmBtn = document.getElementById('modal-confirm');
-        const cancelBtn = document.getElementById('modal-cancel');
-        confirmBtn.innerText = isConfirm ? "EXECUTE" : "OK";
-        cancelBtn.style.display = isConfirm ? "block" : "none";
-        document.getElementById('custom-modal').style.display = "flex";
-        confirmBtn.onclick = () => { document.getElementById('custom-modal').style.display = "none"; if (onConfirm) onConfirm(); };
-        cancelBtn.onclick = () => { document.getElementById('custom-modal').style.display = "none"; };
-    }
+    // --- 輸入框自動高度與 SHIFT+ENTER ---
+    userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+    userInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
 
+    // --- Marked ---
     const renderer = new marked.Renderer();
     renderer.code = function({ text, lang }) {
         const validLang = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
@@ -301,7 +282,11 @@
         const runnable = ['javascript', 'js', 'html'].includes(validLang.toLowerCase());
         return `<div class="code-block">
                 <div class="code-header">
-                    <div class="code-info"><strong>${validLang.toUpperCase()}</strong><span>Len: ${text.length}</span><span>Size: ${formatSize(text)}</span></div>
+                    <div class="code-info">
+                        <strong style="color:var(--term-color)">${validLang.toUpperCase()}</strong>
+                        <span>Length: ${text.length}</span>
+                        <span>Size: ${formatSize(text)}</span>
+                    </div>
                     <div class="code-actions">
                         ${runnable ? `<button class="code-btn" onclick="openRunner('${b64}', '${validLang.toLowerCase()}')" style="color:var(--user-cyan); border-color:var(--user-cyan)">RUN</button>` : ''}
                         <button class="code-btn" onclick="copyCode('${b64}', this)">COPY</button>
@@ -312,6 +297,7 @@
     };
     marked.setOptions({ renderer, breaks: true, gfm: true });
 
+    // --- UI 功能 ---
     function loadHistory() {
         chatBox.innerHTML = '';
         history.forEach((msg, index) => addMessageToUI(msg, index));
@@ -324,24 +310,24 @@
         container.id = `msg-cnt-${index}`;
         const bubble = document.createElement('div');
         bubble.className = `msg msg-${msg.role === 'user' ? 'user' : 'ai'}`;
-        
         if (msg.role === 'user') bubble.textContent = msg.content;
         else { bubble.innerHTML = marked.parse(msg.content); bubble.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el)); }
         
         const actions = document.createElement('div');
         actions.className = 'msg-actions';
-        actions.appendChild(createActionBtn(ICON_COPY, "Copy", () => { navigator.clipboard.writeText(msg.content); showAlert("SUCCESS", "Content copied."); }));
-        if (msg.role === 'user') actions.appendChild(createActionBtn(ICON_EDIT, "Edit", () => enterEditMode(index)));
-        actions.appendChild(createActionBtn(ICON_DELETE, "Delete", () => { showAlert("CONFIRMATION", "Purge message?", true, () => { history.splice(index, 1); saveAndReload(); }); }, true));
+        actions.appendChild(createBtn('COPY', () => { navigator.clipboard.writeText(msg.content); showAlert("SYSTEM", "Copied to clipboard."); }));
+        if (msg.role === 'user') actions.appendChild(createBtn('EDIT', () => enterEditMode(index)));
+        actions.appendChild(createBtn('DEL', () => { showAlert("CONFIRM", "Purge this message?", true, () => { history.splice(index, 1); saveAndReload(); }); }, true));
+        
         container.appendChild(bubble);
         container.appendChild(actions);
         chatBox.appendChild(container);
     }
 
-    function createActionBtn(icon, label, onClick, isRed = false) {
+    function createBtn(label, onClick, isRed = false) {
         const btn = document.createElement('button');
         btn.className = `action-btn ${isRed ? 'btn-red' : ''}`;
-        btn.innerHTML = `${icon} ${label}`;
+        btn.innerText = label;
         btn.onclick = onClick;
         return btn;
     }
@@ -356,8 +342,8 @@
         area.value = original;
         const row = document.createElement('div');
         row.style.cssText = "display:flex; gap:10px; margin-top:10px; justify-content:flex-end;";
-        row.appendChild(createActionBtn(ICON_DELETE, "CANCEL", () => loadHistory()));
-        row.appendChild(createActionBtn(ICON_SEND, "RESEND", () => {
+        row.appendChild(createBtn("CANCEL", () => loadHistory()));
+        row.appendChild(createBtn("RESEND", () => {
             const val = area.value.trim(); if (!val) return;
             history = history.slice(0, index); userInput.value = val; saveAndReload(); sendMessage();
         }));
@@ -368,17 +354,19 @@
 
     async function sendMessage() {
         const text = userInput.value.trim(); if (!text || isGenerating) return;
-        isGenerating = true; isStopped = false;
-        abortController = new AbortController();
-        userInput.value = ''; userInput.disabled = true;
+        isGenerating = true; isStopped = false; abortController = new AbortController();
+        userInput.value = ''; userInput.style.height = '56px'; userInput.disabled = true;
         sendBtn.innerHTML = 'STOP'; sendBtn.classList.add('stop-mode');
+
         const userMsg = { role: 'user', content: text };
         history.push(userMsg); addMessageToUI(userMsg, history.length - 1);
+        
         const aiBubble = document.createElement('div');
         aiBubble.className = 'msg msg-ai';
         aiBubble.innerHTML = `<div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
         const aiCnt = document.createElement('div'); aiCnt.className = 'msg-container ai';
         aiCnt.appendChild(aiBubble); chatBox.appendChild(aiCnt); chatBox.scrollTop = chatBox.scrollHeight;
+
         let full = "";
         try {
             const res = await fetch('/api/models', {
@@ -392,13 +380,14 @@
                 const { done, value } = await reader.read(); if (done) break;
                 const chunk = decoder.decode(value, { stream: true });
                 if (isStopped) break;
-                full += chunk; aiBubble.innerHTML = marked.parse(full);
+                full += chunk;
+                aiBubble.innerHTML = marked.parse(full);
                 aiBubble.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
         } catch (e) { if (e.name !== 'AbortError' && !isStopped) aiBubble.innerHTML = `<span style="color:var(--alert-red)">[ERROR] ${e.message}</span>`;
         } finally {
-            const final = isStopped ? full + "\n\n[CONNECTION TERMINATED BY USER]" : full;
+            const final = isStopped ? full + "\n\n[TERMINATED BY USER]" : full;
             history.push({ role: 'assistant', content: final });
             localStorage.setItem('chatHistory', JSON.stringify(history));
             loadHistory();
@@ -407,18 +396,30 @@
         }
     }
 
+    // --- Modal & Runner ---
+    function showAlert(title, message, isConfirm = false, onConfirm = null) {
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-body-text').innerText = message;
+        const confirmBtn = document.getElementById('modal-confirm');
+        const cancelBtn = document.getElementById('modal-cancel');
+        cancelBtn.style.display = isConfirm ? "block" : "none";
+        document.getElementById('custom-modal').style.display = "flex";
+        confirmBtn.onclick = () => { document.getElementById('custom-modal').style.display = "none"; if (onConfirm) onConfirm(); };
+        cancelBtn.onclick = () => { document.getElementById('custom-modal').style.display = "none"; };
+    }
+
     window.openRunner = function(b64, lang) {
         const code = fromB64(b64);
         document.getElementById('runner-modal').style.display = 'flex';
-        consoleLogArea.innerHTML = `<div style="color:#888">// Initializing Runtime...</div><hr style="border:0; border-top:1px dashed #00ff41; margin:10px 0;">`;
+        const consoleLogArea = document.getElementById('console-log-area');
+        consoleLogArea.innerHTML = `<div style="color:#888">// Initializing...</div><hr style="border:0; border-top:1px dashed #00ff41; margin:10px 0;">`;
         const bridge = `<script>
             const _l = (m, t='info') => window.parent.postMessage({ type: 'console', method: t, content: m }, '*');
             console.log = (...a) => _l(a.map(x => typeof x==='object'?JSON.stringify(x):x).join(' '), 'info');
             console.error = (...a) => _l(a.map(x => typeof x==='object'?JSON.stringify(x):x).join(' '), 'error');
-            window.onerror = (m, s, l) => console.error(m + " at line " + l);
         <\/script>`;
-        if (lang === 'html') runnerFrame.srcdoc = bridge + code;
-        else runnerFrame.srcdoc = bridge + `<body style="padding:20px; font-family:sans-serif;"><h3>JS Sandbox</h3><script>${code}<\/script></body>`;
+        const ifr = document.getElementById('runner-frame');
+        ifr.srcdoc = lang === 'html' ? bridge + code : bridge + `<body style="padding:20px; font-family:sans-serif;"><h3>JS Environment</h3><script>${code}<\/script></body>`;
     };
 
     window.addEventListener('message', (e) => {
@@ -426,20 +427,15 @@
             const l = document.createElement('div');
             if(e.data.method === 'error') l.style.color = 'var(--alert-red)';
             l.textContent = `[${e.data.method.toUpperCase()}] ${e.data.content}`;
-            consoleLogArea.appendChild(l);
-            consoleLogArea.scrollTop = consoleLogArea.scrollHeight;
+            const logArea = document.getElementById('console-log-area');
+            logArea.appendChild(l); logArea.scrollTop = logArea.scrollHeight;
         }
     });
 
-    window.closeRunner = () => { document.getElementById('runner-modal').style.display = 'none'; runnerFrame.srcdoc = ''; };
-    window.copyCode = (b64, btn) => {
-        navigator.clipboard.writeText(fromB64(b64));
-        const old = btn.innerText; btn.innerText = 'COPIED';
-        setTimeout(()=> btn.innerText = old, 1500);
-    };
-    function confirmPurge() { showAlert("DANGER", "Clear all history?", true, () => { history = []; saveAndReload(); }); }
+    window.closeRunner = () => { document.getElementById('runner-modal').style.display = 'none'; document.getElementById('runner-frame').srcdoc = ''; };
+    window.copyCode = (b64, btn) => { navigator.clipboard.writeText(fromB64(b64)); btn.innerText = 'COPIED'; setTimeout(()=> btn.innerText = 'COPY', 1500); };
+    function confirmPurge() { showAlert("DANGER", "Purge all session logs?", true, () => { history = []; saveAndReload(); }); }
     window.handleButtonClick = () => { if(isGenerating) { isStopped = true; if(abortController) abortController.abort(); } else sendMessage(); };
-    userInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
     window.onload = () => { applyStyle(currentStyle); loadHistory(); };
 </script>
 </body>
