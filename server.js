@@ -89,8 +89,8 @@ const checkRateLimit = (req, res, next) => {
         record = { date: today, count: 0 };
     }
     
-    if (record.count >= 30) {
-        return res.status(429).json({ error: "Rate limit exceeded (30/day)." });
+    if (record.count >= 50) {
+        return res.status(429).json({ error: "Rate limit exceeded (50/day)." });
     }
     
     record.count++;
