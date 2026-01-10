@@ -219,9 +219,7 @@
     const stylesMap = {
         terminal: { bg: '#050505', term: '#00ff41', text: '#dddddd', border: '#333333', bubbleAi: 'rgba(127, 127, 127, 0.05)', bubbleUser: 'rgba(0, 255, 255, 0.05)', userCyan: '#0ff', editBg: '#111' },
         dark:     { bg: '#050505', term: '#ffffff', text: '#ffffff', border: '#444444', bubbleAi: 'rgba(255, 255, 255, 0.1)', bubbleUser: 'rgba(255, 255, 255, 0.1)', userCyan: '#fff', editBg: '#1a1a1a' },
-        gray:     { bg: '#333333', term: '#ffffff', text: '#ffffff', border: '#ffffff', bubbleAi: '#222222', bubbleUser: '#222222', userCyan: '#fff', editBg: '#222' },
-        white:    { bg: '#ffffff', term: '#000000', text: '#000000', border: '#000000', bubbleAi: '#f0f0f0', bubbleUser: '#f0f0f0', userCyan: '#000', editBg: '#eee' }
-    };
+        gray:     { bg: '#333333', term: '#ffffff', text: '#ffffff', border: '#ffffff', bubbleAi: '#222222', bubbleUser: '#222222', userCyan: '#fff', editBg: '#222' }
     let currentStyle = localStorage.getItem('chatStyle') || 'terminal';
     let history = [];
     try { history = JSON.parse(localStorage.getItem('chatHistory')) || []; } catch(e){}
