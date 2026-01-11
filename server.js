@@ -17,6 +17,7 @@ app.use((req, res, next) => {
 
 // --- CONFIG ---
 const PORT = process.env.PORT || 3000;
+const RLD_FILE = path.join(__dirname, 'rld.json');
 
 const API_KEYS = {
     OA: process.env.OAAPI || "",
@@ -40,111 +41,104 @@ const MODEL_REGISTRY = {
     'gemini-3-flash-preview': { provider: 'Ollama' },
     'nemotron-3-nano:30b': { provider: 'Ollama' },
     'qwen3-next:80b': { provider: 'Ollama' },
-    'gpt-5-nano': { provider: 'OpenAI' },
+    'gpt-5-nano': { provider: 'OpenAI', flex: true },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
-    'gpt-5-mini': { provider: 'OpenAI' }
+    'gpt-5-mini': { provider: 'OpenAI', flex: true },
+    'gpt-5': { provider: 'OpenAI', flex: true },
+    'gpt-5.1': { provider: 'OpenAI', flex: true },
+    'o4-mini': { provider: 'OpenAI', flex: true }
 };
 
-// --- FILE OPS (BUG FIXED HERE) ---
-const SAVED_DIR = path.join(__dirname, 'saved'); // 定義資料夾路徑
-const SAVED_CHATS_FILE = path.join(SAVED_DIR, 'chats.json'); // 定義檔案路徑
-
-// 1. 先檢查資料夾是否存在，不存在就建立
-if (!fs.existsSync(SAVED_DIR)) {
-    fs.mkdirSync(SAVED_DIR);
+// --- FILE INITIALIZATION ---
+if (!fs.existsSync(RLD_FILE)) {
+    fs.writeFileSync(RLD_FILE, JSON.stringify({}));
 }
+const SAVED_DIR = path.join(__dirname, 'saved');
+const SAVED_CHATS_FILE = path.join(SAVED_DIR, 'chats.json');
+if (!fs.existsSync(SAVED_DIR)) fs.mkdirSync(SAVED_DIR);
+if (!fs.existsSync(SAVED_CHATS_FILE)) fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify({}));
 
-// 2. 再檢查檔案是否存在，不存在就建立
-if (!fs.existsSync(SAVED_CHATS_FILE)) {
-    fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify({}));
-}
+// --- RATE LIMIT QUEUE SYSTEM ---
+let rlQueue = Promise.resolve();
+
+const getModelGroup = (model) => {
+    if (model === 'gpt-5' || model === 'gpt-5.1') return { group: 'C', limit: 10 };
+    if (model === 'o4-mini') return { group: 'B', limit: 20 };
+    return { group: 'A', limit: 40 }; // Ollama + Nano/Mini models
+};
 
 // --- MIDDLEWARE ---
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Security & CORS Headers
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*'); 
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
-    
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
     next();
 });
-
-// --- RATE LIMITER ---
-const ipLimits = new Map();
-const checkRateLimit = (req, res, next) => {
-    const ip = req.ip || "";
-    const today = new Date().toISOString().split('T')[0];
-    let record = ipLimits.get(ip);
-    
-    if (!record || record.date !== today) {
-        record = { date: today, count: 0 };
-    }
-    
-    if (record.count >= 50) {
-        return res.status(429).json({ error: "Rate limit exceeded (50/day)." });
-    }
-    
-    record.count++;
-    ipLimits.set(ip, record);
-    next();
-};
 
 // --- ROUTES ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // --- STREAMING INFERENCE API ---
-app.post('/api/models', checkRateLimit, async (req, res) => {
-    var { model, messages } = req.body;
+app.post('/api/models', async (req, res) => {
+    const { model, messages } = req.body;
     const config = MODEL_REGISTRY[model];
-    
     if (!config) return res.status(400).json({ error: `Invalid Model` });
 
-    const recentMessages = messages.slice(-15).map(m => ({
-        role: m.role === 'ai' ? 'assistant' : m.role,
-        content: m.content
-    }));
+    const ip = req.ip || "unknown";
+    const today = new Date().toISOString().split('T')[0];
+    const groupInfo = getModelGroup(model);
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Transfer-Encoding', 'chunked');
+    // --- 佇列鎖定：確保 RateLimit 存取順序 ---
+    let release;
+    const waitPromise = new Promise(resolve => release = resolve);
+    const previousQueue = rlQueue;
+    rlQueue = previousQueue.then(() => waitPromise);
+
+    await previousQueue;
 
     try {
-        let apiRes;
-        
-        // --- OLLAMA ---
+        let rld = JSON.parse(fs.readFileSync(RLD_FILE, 'utf8'));
+        if (!rld[ip] || rld[ip].date !== today) {
+            rld[ip] = { date: today, A: 0, B: 0, C: 0 };
+        }
+
+        const currentCount = rld[ip][groupInfo.group];
+        if (currentCount >= groupInfo.limit) {
+            release(); // 釋放鎖定
+            return res.status(429).json({ error: `Rate limit exceeded for Group ${groupInfo.group} (${groupInfo.limit}/day).` });
+        }
+
+        // 更新計數並存檔
+        rld[ip][groupInfo.group]++;
+        fs.writeFileSync(RLD_FILE, JSON.stringify(rld, null, 2));
+
+        // --- 準備 API 請求 ---
+        const recentMessages = messages.slice(-15).map(m => ({
+            role: m.role === 'ai' ? 'assistant' : m.role,
+            content: m.content
+        }));
+
+        let fetchPromise;
         if (config.provider === "Ollama") {
-            apiRes = await fetch("https://ollama.com/api/chat", {
+            fetchPromise = fetch("https://ollama.com/api/chat", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${API_KEYS.OLM}`
                 },
-                body: JSON.stringify({
-                    model: model,
-                    messages: recentMessages,
-                    stream: true 
-                })
+                body: JSON.stringify({ model: model, messages: recentMessages, stream: true })
             });
-        }
-
-        // --- OPENAI ---
-        else if (config.provider === "OpenAI") {
-            var st;
-            if (model == "gpt-5-mini" || model == "gpt-5-nano") {
-                st = "flex";
-            } else {
-                st = "default";
-            }
-            
-            apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        } else {
+            // OpenAI 邏輯 (包含 Flex 判定)
+            const isFlex = config.flex === true;
+            fetchPromise = fetch("https://api.openai.com/v1/chat/completions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -154,16 +148,20 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                     model: model,
                     messages: recentMessages,
                     stream: true,
-                    service_tier: st,
-                    ...(model.includes("search") && {
-                        web_search_options: {}
-                    })
+                    service_tier: isFlex ? "flex" : "default"
                 })
             });
         }
 
-        let buffer = ""; 
+        // --- 關鍵步驟：發出請求後立刻釋放鎖定，不等待串流完成 ---
+        const apiRes = await fetchPromise;
+        release(); 
 
+        // --- 處理串流回應 ---
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Transfer-Encoding', 'chunked');
+
+        let buffer = ""; 
         for await (const chunk of apiRes.body) {
             const lines = (buffer + chunk.toString()).split('\n');
             buffer = lines.pop(); 
@@ -171,17 +169,12 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
             for (const line of lines) {
                 const trimmed = line.trim();
                 if (!trimmed) continue;
-                
                 try {
                     let text = "";
-
                     if (config.provider === "Ollama") {
                         const json = JSON.parse(trimmed);
-                        if (json.message && json.message.content) {
-                            text = json.message.content;
-                        }
-                    } 
-                    else if (config.provider === "OpenAI" || config.provider === "Zelfa") {
+                        if (json.message && json.message.content) text = json.message.content;
+                    } else {
                         if (trimmed.startsWith('data: ')) {
                             const dataStr = trimmed.replace('data: ', '').trim();
                             if (dataStr !== '[DONE]') {
@@ -191,32 +184,24 @@ app.post('/api/models', checkRateLimit, async (req, res) => {
                         }
                     }
                     if (text) res.write(text);
-
-                } catch (e) { 
-                }
+                } catch (e) {}
             }
         }
-        
         res.end();
 
     } catch (e) {
+        release(); // 發生錯誤也要記得釋放鎖定
         console.error("Stream Error:", e);
+        if (!res.headersSent) res.status(500);
         res.write("\n[System Error: Connection interrupted]");
         res.end();
     }
 });
 
-app.get("/robots.txt", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "robots.txt"));
-});
-
-app.get("/Robots.txt", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "robots.txt"));
-});
-
-app.get("/robot.txt", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "robots.txt"));
-});
+// --- STATIC ROUTES & ROBOTS ---
+app.get("/robots.txt", (req, res) => res.sendFile(path.join(__dirname, "public", "robots.txt")));
+app.get("/Robots.txt", (req, res) => res.sendFile(path.join(__dirname, "public", "robots.txt")));
+app.get("/robot.txt", (req, res) => res.sendFile(path.join(__dirname, "public", "robots.txt")));
 
 app.all("*", (req, res) => {
     res.redirect("https://zelfaz.nethacker.cloud");
