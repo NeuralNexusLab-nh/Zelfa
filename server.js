@@ -64,7 +64,7 @@ let rlQueue = Promise.resolve();
 
 const getModelGroup = (model) => {
     if (model === 'gpt-5' || model === 'gpt-5.1') return { group: 'C', limit: 10 };
-    if (model === 'o4-mini') return { group: 'B', limit: 20 };
+    if (model === 'o4-mini' || model === 'gpt-5-mini') return { group: 'B', limit: 20 };
     return { group: 'A', limit: 40 }; // Ollama + Nano/Mini models
 };
 
