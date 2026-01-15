@@ -48,9 +48,7 @@ const MODEL_REGISTRY = {
     'gpt-5': { provider: 'OpenAI', flex: true },
     'gpt-5.1': { provider: 'OpenAI', flex: true },
     'gpt-5.2': { provider: 'OpenAI', flex: true },
-    'babbage-002': { provider: 'OpenAI' },
     'gpt-3.5-turbo': { provider: 'OpenAI' },
-    'davinci-002': { provider: 'OpenAI' },
     'o4-mini': { provider: 'OpenAI', flex: true }
 };
 
@@ -69,7 +67,7 @@ let rlQueue = Promise.resolve();
 const getModelGroup = (model) => {
     if (model === 'gpt-5.2') return { group: 'D', limit: 5 };
     if (model === 'gpt-5' || model === 'gpt-5.1') return { group: 'C', limit: 10 };
-    if (model === 'o4-mini' || model === 'gpt-5-mini' || model === 'davinci-002' || model === 'gpt-3.5-turbo') return { group: 'B', limit: 20 };
+    if (model === 'o4-mini' || model === 'gpt-5-mini' || model === 'gpt-3.5-turbo') return { group: 'B', limit: 20 };
     return { group: 'A', limit: 40 }; // Ollama + Nano/Mini models
 };
 
