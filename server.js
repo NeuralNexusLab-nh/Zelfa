@@ -109,7 +109,7 @@ app.post('/api/models', async (req, res) => {
     try {
         let rld = JSON.parse(fs.readFileSync(RLD_FILE, 'utf8'));
         if (!rld[ip] || rld[ip].date !== today) {
-            rld[ip] = { date: today, A: 0, B: 0, C: 0 };
+            rld[ip] = { date: today, A: 0, B: 0, C: 0, D: 0 };
         }
 
         const currentCount = rld[ip][groupInfo.group];
