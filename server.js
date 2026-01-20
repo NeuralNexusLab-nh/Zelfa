@@ -115,7 +115,10 @@ app.post('/api/models', async (req, res) => {
         const currentCount = rld[ip][groupInfo.group];
         if (currentCount >= groupInfo.limit) {
             release(); // 釋放鎖定
-            return res.status(429).send(`You have reached this model's daily rate limit; please switch to another model.`);
+            return res.status(429).send(`
+              The daily global community quota for Group ${groupInfo.group} has been fully utilized! 🚀 
+              But, you can always switch to another powerful model from the menu and keep the mission going! 🦾
+            `);
         }
 
         // 更新計數並存檔
