@@ -65,10 +65,10 @@ if (!fs.existsSync(SAVED_CHATS_FILE)) fs.writeFileSync(SAVED_CHATS_FILE, JSON.st
 let rlQueue = Promise.resolve();
 
 const getModelGroup = (model) => {
-    if (model === 'gpt-5.2') return { group: 'D', limit: 5 };
-    if (model === 'gpt-5' || model === 'gpt-5.1') return { group: 'C', limit: 10 };
-    if (model === 'o4-mini' || model === 'gpt-5-mini' || model === 'gpt-3.5-turbo') return { group: 'B', limit: 20 };
-    return { group: 'A', limit: 40 }; // Ollama + Nano/Mini models
+    if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') return { group: 'D', limit: 80 };
+    if (model === 'gpt-3.5-turbo') return  { group: 'C', limit: 120 };
+    if (model === 'o4-mini' || model === 'gpt-5-mini' || model === 'gpt-4.1-nano' || model === 'gpt-4o-mini') return { group: 'B', limit: 500 };
+    return { group: 'A', limit: 200 }; // Ollama models
 };
 
 // --- MIDDLEWARE ---
@@ -94,7 +94,7 @@ app.post('/api/models', async (req, res) => {
     const config = MODEL_REGISTRY[model];
     if (!config) return res.status(400).json({ error: `Invalid Model` });
 
-    const ip = req.ip || "unknown";
+    const ip = "0.0.0.0";
     const today = new Date().toISOString().split('T')[0];
     const groupInfo = getModelGroup(model);
 
@@ -115,7 +115,7 @@ app.post('/api/models', async (req, res) => {
         const currentCount = rld[ip][groupInfo.group];
         if (currentCount >= groupInfo.limit) {
             release(); // 釋放鎖定
-            return res.status(429).json({ error: `Rate limit exceeded for Group ${groupInfo.group} (${groupInfo.limit}/day).` });
+            return res.status(429).send(`You have reached this model's daily rate limit; please switch to another model.`);
         }
 
         // 更新計數並存檔
