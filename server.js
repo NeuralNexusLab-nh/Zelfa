@@ -65,7 +65,7 @@ if (!fs.existsSync(SAVED_CHATS_FILE)) fs.writeFileSync(SAVED_CHATS_FILE, JSON.st
 let rlQueue = Promise.resolve();
 
 const getModelGroup = (model) => {
-    if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') return { group: 'D', limit: 80 };
+    if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') return { group: 'D', limit: 50 };
     if (model === 'gpt-3.5-turbo') return  { group: 'C', limit: 120 };
     if (model === 'o4-mini' || model === 'gpt-5-mini' || model === 'gpt-4.1-nano' || model === 'gpt-4o-mini') return { group: 'B', limit: 500 };
     return { group: 'A', limit: 200 }; // Ollama models
