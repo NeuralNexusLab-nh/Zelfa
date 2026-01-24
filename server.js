@@ -65,7 +65,7 @@ if (!fs.existsSync(SAVED_CHATS_FILE)) fs.writeFileSync(SAVED_CHATS_FILE, JSON.st
 let rlQueue = Promise.resolve();
 
 const getModelGroup = (model) => {
-    if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') return { group: 'D', limit: 50 };
+    if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') return { group: 'D', limit: 30 };
     if (model === 'gpt-3.5-turbo') return  { group: 'C', limit: 120 };
     if (model === 'o4-mini' || model === 'gpt-5-mini' || model === 'gpt-4.1-nano' || model === 'gpt-4o-mini') return { group: 'B', limit: 500 };
     return { group: 'A', limit: 200 }; // Ollama models
@@ -143,6 +143,8 @@ app.post('/api/models', async (req, res) => {
             });
         } else {
             // OpenAI 邏輯 (包含 Flex 判定)
+            var tokens = false;
+            if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') tokens = true;
             const isFlex = config.flex === true;
             fetchPromise = fetch("https://api.openai.com/v1/chat/completions", {
                 method: "POST",
@@ -154,12 +156,12 @@ app.post('/api/models', async (req, res) => {
                     model: model,
                     messages: recentMessages,
                     stream: true,
-                    service_tier: isFlex ? "flex" : "default"
+                    service_tier: isFlex ? "flex" : "default",
+                    "max_completion_tokens": tokens ? 6500 : 20000
                 })
             });
         }
 
-        // --- 關鍵步驟：發出請求後立刻釋放鎖定，不等待串流完成 ---
         const apiRes = await fetchPromise;
         release(); 
 
