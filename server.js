@@ -67,7 +67,7 @@ let rlQueue = Promise.resolve();
 const getModelGroup = (model) => {
     if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') return { group: 'D', limit: 30 };
     if (model === 'gpt-3.5-turbo') return  { group: 'C', limit: 120 };
-    if (model === 'o4-mini' || model === 'gpt-5-mini' || model === 'gpt-4.1-nano' || model === 'gpt-4o-mini') return { group: 'B', limit: 500 };
+    if (model === 'o4-mini' || model === 'gpt-5-mini' || model === 'gpt-4.1-nano' || model === 'gpt-4o-mini') return { group: 'B', limit: 230 };
     return { group: 'A', limit: 200 }; // Ollama models
 };
 
@@ -157,7 +157,7 @@ app.post('/api/models', async (req, res) => {
                     messages: recentMessages,
                     stream: true,
                     service_tier: isFlex ? "flex" : "default",
-                    "max_completion_tokens": tokens ? 6500 : 20000
+                    "max_completion_tokens": tokens ? 6500 : 10000
                 })
             });
         }
