@@ -534,7 +534,7 @@
     const ICON_DELETE = `<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`;
     const ICON_SEND = `<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
 
-    // --- State & Styles (FIXED) ---
+    // --- State & Styles ---
     const stylesMap = {
         terminal: { bg: '#050505', term: '#00ff41', text: '#dddddd', border: '#333333', bubbleAi: 'rgba(127, 127, 127, 0.05)', bubbleUser: 'rgba(0, 255, 255, 0.05)', userCyan: '#0ff', editBg: '#111' },
         dark:     { bg: '#050505', term: '#ffffff', text: '#ffffff', border: '#444444', bubbleAi: 'rgba(255, 255, 255, 0.1)', bubbleUser: 'rgba(255, 255, 255, 0.1)', userCyan: '#fff', editBg: '#1a1a1a' },
@@ -545,7 +545,7 @@
     let currentStyle = localStorage.getItem('chatStyle') || 'terminal';
 
     /* ============================================================
-       MULTI CHAT SYSTEM (NEW)
+       MULTI CHAT SYSTEM
     ============================================================ */
 
     const CHAT_META_KEY = 'zchat:meta';
@@ -624,7 +624,7 @@
     }
 
     /* ============================================================
-       ORIGINAL STATE (kept intact)
+       ORIGINAL STATE
     ============================================================ */
 
     let history = [];
@@ -653,7 +653,7 @@
     let currentModel = localStorage.getItem('zchat:model') || 'gpt-oss:120b';
 
     /* ============================================================
-       STYLE SYSTEM (ORIGINAL, UNCHANGED LOGIC)
+       STYLE SYSTEM
     ============================================================ */
 
     function applyStyle(name) {
@@ -674,7 +674,7 @@
     }
 
     /* ============================================================
-       HELPERS (ORIGINAL)
+       HELPERS
     ============================================================ */
 
     const getB64 = (s) => btoa(unescape(encodeURIComponent(s)));
@@ -682,28 +682,20 @@
     const formatSize = (s) => { const b = new Blob([s]).size; return b < 1024 ? b + " B" : (b/1024).toFixed(2) + " KB"; };
 
     /* ============================================================
-       TEXTAREA (ORIGINAL)
+       TEXTAREA
     ============================================================ */
 
     userInput.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; });
     userInput.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
     /* ============================================================
-       MARKDOWN RENDERER (FIXED & SAFE)
+       MARKDOWN RENDERER (FIXED)
     ============================================================ */
-
-    const escapeHTML = (s) =>
-        s.replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#39;");
 
     const renderer = new marked.Renderer();
     renderer.code = function({ text, lang }) {
         const validLang = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
-        const escaped = escapeHTML(text);
-        const highlighted = hljs.highlight(escaped, { language: validLang, ignoreIllegals: true }).value;
+        const highlighted = hljs.highlight(text, { language: validLang, ignoreIllegals: true }).value;
         const b64 = getB64(text);
         const runnable = ['javascript', 'js', 'html', 'htm'].includes(validLang.toLowerCase());
         return `<div class="code-block">
@@ -720,7 +712,7 @@
     marked.setOptions({ renderer, breaks: true, gfm: true, mangle: false, headerIds: false });
 
     /* ============================================================
-       CHAT RENDERING (ORIGINAL LOGIC, BUT PER-CHAT)
+       CHAT RENDERING
     ============================================================ */
 
     function loadHistory(shouldScroll = true) {
@@ -787,7 +779,7 @@
     }
 
     /* ============================================================
-       SEND MESSAGE (ORIGINAL LOGIC, MODEL HOOK UPDATED)
+       SEND MESSAGE
     ============================================================ */
 
     async function sendMessage() {
@@ -830,7 +822,7 @@
     }
 
     /* ============================================================
-       MODALS (ORIGINAL)
+       MODALS
     ============================================================ */
 
     let confirmAction = null;
