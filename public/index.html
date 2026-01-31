@@ -689,13 +689,21 @@
     userInput.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
     /* ============================================================
-       MARKDOWN RENDERER (ORIGINAL)
+       MARKDOWN RENDERER (FIXED & SAFE)
     ============================================================ */
+
+    const escapeHTML = (s) =>
+        s.replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#39;");
 
     const renderer = new marked.Renderer();
     renderer.code = function({ text, lang }) {
         const validLang = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
-        const highlighted = hljs.highlight(text, { language: validLang }).value;
+        const escaped = escapeHTML(text);
+        const highlighted = hljs.highlight(escaped, { language: validLang, ignoreIllegals: true }).value;
         const b64 = getB64(text);
         const runnable = ['javascript', 'js', 'html', 'htm'].includes(validLang.toLowerCase());
         return `<div class="code-block">
@@ -709,7 +717,7 @@
             <pre><code class="hljs language-${validLang}">${highlighted}</code></pre>
         </div>`;
     };
-    marked.setOptions({ renderer, breaks: true, gfm: true });
+    marked.setOptions({ renderer, breaks: true, gfm: true, mangle: false, headerIds: false });
 
     /* ============================================================
        CHAT RENDERING (ORIGINAL LOGIC, BUT PER-CHAT)
