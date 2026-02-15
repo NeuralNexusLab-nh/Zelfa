@@ -11,7 +11,7 @@ app.set('trust proxy', true);
 
 // Debug Log
 app.use((req, res, next) => {
-    console.log("Req's path is " + req.path + " method: " + " body: " + req.body || none);
+    console.log("Req's path is " + req.path + " method: " + " body: " + req.body || none + " PID: " + process.pid);
     next();
 });
 
@@ -90,33 +90,22 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 
 // --- STREAMING INFERENCE API ---
 let lastRequestTime = 0;
-let isProcessing = false;
 
 app.post('/api/models', async (req, res) => {
     const now = Date.now();
-
-    // --- 如果 5 秒內已有請求在處理 → 直接封鎖 ---
-    if (isProcessing && (now - lastRequestTime < 5000)) {
+    if (now - lastRequestTime < 5000) {
         return res
             .status(403)
             .type("text")
             .send("Do not waste shared computational resources.");
     }
-
     // --- 強制 0.5 秒最小間隔 ---
     lastRequestTime = Date.now();
-    const diff = now - lastRequestTime;
-    if (diff < 500) {
-        await new Promise(resolve => setTimeout(resolve, 500 - diff));
-    }
-
-    isProcessing = true;
 
     try {
         const { model, messages } = req.body;
         const config = MODEL_REGISTRY[model];
         if (!config) {
-            isProcessing = false;
             return res.status(400).json({ error: `Invalid Model` });
         }
 
@@ -210,8 +199,6 @@ app.post('/api/models', async (req, res) => {
         if (!res.headersSent) res.status(500);
         res.write("\n[System Error: Connection interrupted]");
         res.end();
-    } finally {
-        isProcessing = false;
     }
 });
 
