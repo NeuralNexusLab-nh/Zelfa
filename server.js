@@ -104,13 +104,13 @@ app.post('/api/models', async (req, res) => {
     }
 
     // --- 強制 0.5 秒最小間隔 ---
+    lastRequestTime = Date.now();
     const diff = now - lastRequestTime;
     if (diff < 500) {
         await new Promise(resolve => setTimeout(resolve, 500 - diff));
     }
 
     isProcessing = true;
-    lastRequestTime = Date.now();
 
     try {
         const { model, messages } = req.body;
