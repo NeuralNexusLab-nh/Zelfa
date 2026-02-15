@@ -11,7 +11,7 @@ app.set('trust proxy', true);
 
 // Debug Log
 app.use((req, res, next) => {
-    console.log("Req from " + req.ip + ", path is " + req.path);
+    console.log("Req's path is " + req.path + " method: " + " body: " + req.body || none);
     next();
 });
 
@@ -89,49 +89,44 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // --- STREAMING INFERENCE API ---
+let lastRequestTime = 0;
+let isProcessing = false;
+
 app.post('/api/models', async (req, res) => {
-    const { model, messages } = req.body;
-    const config = MODEL_REGISTRY[model];
-    if (!config) return res.status(400).json({ error: `Invalid Model` });
+    const now = Date.now();
 
-    const ip = "0.0.0.0";
-    const today = new Date().toISOString().split('T')[0];
-    const groupInfo = getModelGroup(model);
+    // --- 如果 5 秒內已有請求在處理 → 直接封鎖 ---
+    if (isProcessing && (now - lastRequestTime < 5000)) {
+        return res
+            .status(403)
+            .type("text")
+            .send("Do not waste shared computational resources.");
+    }
 
-    // --- 佇列鎖定：確保 RateLimit 存取順序 ---
-    let release;
-    const waitPromise = new Promise(resolve => release = resolve);
-    const previousQueue = rlQueue;
-    rlQueue = previousQueue.then(() => waitPromise);
+    // --- 強制 0.5 秒最小間隔 ---
+    const diff = now - lastRequestTime;
+    if (diff < 500) {
+        await new Promise(resolve => setTimeout(resolve, 500 - diff));
+    }
 
-    await previousQueue;
+    isProcessing = true;
+    lastRequestTime = Date.now();
 
     try {
-        let rld = JSON.parse(fs.readFileSync(RLD_FILE, 'utf8'));
-        if (!rld[ip] || rld[ip].date !== today) {
-            rld[ip] = { date: today, A: 0, B: 0, C: 0, D: 0 };
+        const { model, messages } = req.body;
+        const config = MODEL_REGISTRY[model];
+        if (!config) {
+            isProcessing = false;
+            return res.status(400).json({ error: `Invalid Model` });
         }
 
-        const currentCount = rld[ip][groupInfo.group];
-        if (currentCount >= groupInfo.limit) {
-            release(); // 釋放鎖定
-            return res.status(429).send(`
-              The daily global community quota for Group ${groupInfo.group} has been fully utilized! 🚀 
-              But, you can always switch to another powerful model from the menu and keep the mission going! 🦾
-            `);
-        }
-
-        // 更新計數並存檔
-        rld[ip][groupInfo.group]++;
-        fs.writeFileSync(RLD_FILE, JSON.stringify(rld, null, 2));
-
-        // --- 準備 API 請求 ---
         const recentMessages = messages.slice(-15).map(m => ({
             role: m.role === 'ai' ? 'assistant' : m.role,
             content: m.content
         }));
 
         let fetchPromise;
+
         if (config.provider === "Ollama") {
             fetchPromise = fetch("https://ollama.com/api/chat", {
                 method: "POST",
@@ -139,13 +134,20 @@ app.post('/api/models', async (req, res) => {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${API_KEYS.OLM}`
                 },
-                body: JSON.stringify({ model: model, messages: recentMessages, stream: true })
+                body: JSON.stringify({
+                    model: model,
+                    messages: recentMessages,
+                    stream: true
+                })
             });
         } else {
-            // OpenAI 邏輯 (包含 Flex 判定)
-            var tokens = false;
-            if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') tokens = true;
+            let tokens = false;
+            if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') {
+                tokens = true;
+            }
+
             const isFlex = config.flex === true;
+
             fetchPromise = fetch("https://api.openai.com/v1/chat/completions", {
                 method: "POST",
                 headers: {
@@ -157,31 +159,34 @@ app.post('/api/models', async (req, res) => {
                     messages: recentMessages,
                     stream: true,
                     service_tier: isFlex ? "flex" : "default",
-                    "max_completion_tokens": tokens ? 6500 : 10000
+                    max_completion_tokens: tokens ? 6500 : 10000
                 })
             });
         }
 
         const apiRes = await fetchPromise;
-        release(); 
 
-        // --- 處理串流回應 ---
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
         res.setHeader('Transfer-Encoding', 'chunked');
 
-        let buffer = ""; 
+        let buffer = "";
+
         for await (const chunk of apiRes.body) {
             const lines = (buffer + chunk.toString()).split('\n');
-            buffer = lines.pop(); 
+            buffer = lines.pop();
 
             for (const line of lines) {
                 const trimmed = line.trim();
                 if (!trimmed) continue;
+
                 try {
                     let text = "";
+
                     if (config.provider === "Ollama") {
                         const json = JSON.parse(trimmed);
-                        if (json.message && json.message.content) text = json.message.content;
+                        if (json.message?.content) {
+                            text = json.message.content;
+                        }
                     } else {
                         if (trimmed.startsWith('data: ')) {
                             const dataStr = trimmed.replace('data: ', '').trim();
@@ -191,20 +196,25 @@ app.post('/api/models', async (req, res) => {
                             }
                         }
                     }
+
                     if (text) res.write(text);
+
                 } catch (e) {}
             }
         }
+
         res.end();
 
     } catch (e) {
-        release(); // 發生錯誤也要記得釋放鎖定
         console.error("Stream Error:", e);
         if (!res.headersSent) res.status(500);
         res.write("\n[System Error: Connection interrupted]");
         res.end();
+    } finally {
+        isProcessing = false;
     }
 });
+
 
 // --- STATIC ROUTES & ROBOTS ---
 app.get("/robots.txt", (req, res) => res.sendFile(path.join(__dirname, "public", "robots.txt")));
