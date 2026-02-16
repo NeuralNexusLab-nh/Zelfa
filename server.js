@@ -97,9 +97,8 @@ app.post('/api/models', async (req, res) => {
         return res
             .status(403)
             .type("text")
-            .send("Do not waste shared computational resources.");
+            .send("ERROR 403 Access Denied: Do not abuse server resources.");
     }
-    // --- 強制 0.5 秒最小間隔 ---
     lastRequestTime = Date.now();
 
     try {
