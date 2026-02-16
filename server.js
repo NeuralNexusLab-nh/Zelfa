@@ -11,7 +11,7 @@ app.set('trust proxy', true);
 
 // Debug Log
 app.use((req, res, next) => {
-    console.log("Req's path is " + req.path + " method: " + " body: " + req.body || "none" + " PID: " + process.pid);
+    console.log("Req's path is " + req.path + " User Agent: " + req.headers["User-Agent"]);
     next();
 });
 
