@@ -208,7 +208,7 @@ app.get("/Robots.txt", (req, res) => res.sendFile(path.join(__dirname, "public",
 app.get("/robot.txt", (req, res) => res.sendFile(path.join(__dirname, "public", "robots.txt")));
 
 app.all("*", (req, res) => {
-    res.redirect("https://zelfaz.nethacker.cloud");
+    res.redirect("https://zelfa.zone.id/");
 });
 
 app.listen(PORT, () => console.log(`Zelfa Hacker Edition Online: ${PORT}`));
