@@ -523,13 +523,17 @@
                 <label>CORE MODEL</label>
                 <select id="settings-model-select">
                     <optgroup label="General Chat">
-                        <option value="gpt-oss:120b" title="The flagship open-source model. Balanced for dialogue, general knowledge, and creativity.">gpt-oss:120b</option>
+                        <option value="gpt-oss:120b" title="The flagship open-source model. Balanced for dialogue, general knowledge, and creativity.">GPT OSS (Ollama)</option>
                         <option value="glm-5" title="Next-gen general assistant with strong multilingual support and logical consistency.">GLM 5 (Ollama)</option>
                         <option value="gemini-3-flash-preview" title="High-speed model from Google optimized for quick responses and long context.">Gemini 3 Flash (Ollama)</option>
                         <option value="gemma3:27b" title="Google's latest lightweight flagship. Excellent at instruction following and summarization.">Gemma3 (Ollama)</option>
                         <option value="minimax-m2.5" title="Specialized in natural dialogue and high-quality creative writing.">Minimax M2.5 (Ollama)</option>
                         <option value="kimi-k2.5" title="Great for long-form context and deep conversational understanding.">Kimi K2.5 (Ollama)</option>
                         <option value="rnj-1:8b" title="Small but efficient model for basic chatting and daily tasks.">RNJ 1 (Ollama)</option>
+                        <option value="gpt-5-mini" title="Efficient version of GPT-5. Fast but retains high-level reasoning.">❄️ GPT 5 Mini (OpenAI Flex)</option>
+                        <option value="gpt-5-nano" title="Lightweight frontier model for instant responses with smart logic.">❄️ GPT 5 Nano (OpenAI Flex)</option>
+                        <option value="gpt-4.1-nano" title="Refined GPT-4 architecture in a small, fast package.">✨ GPT 4.1 Nano (OpenAI)</option>
+                        <option value="gpt-4o-mini" title="OpenAI's most cost-effective smart model. Great for general tasks.">✨ GPT 4o Mini (OpenAI)</option>
                         <option value="gpt-3.5-turbo" title="OpenAI's classic model. Fast, reliable, and efficient for simple chat tasks.">✨ GPT 3.5 Turbo (OpenAI)</option>
                     </optgroup>
                     
@@ -546,17 +550,13 @@
                         <option value="qwen3-next:80b" title="Advanced general logic model with improved factual recall.">Qwen3 Next (Ollama)</option>
                         <option value="cogito-2.1:671b" title="A behemoth designed for multi-step reasoning and philosophical depth.">Cogito 2.1 (Ollama)</option>
                         <option value="ministral-3:14b" title="Compact research model, great for quick information retrieval.">Ministral 3 (Ollama)</option>
+                        <option value="o4-mini" title="Specialized reasoning model for high-efficiency logic tasks.">❄️ GPT o4 Mini (OpenAI Flex)</option>
                     </optgroup>
 
-                    <optgroup label="Frontier (OpenAI Flex)">
+                    <optgroup label="Beyond (OpenAI Flagship)">
                         <option value="gpt-5.2" title="The pinnacle of AI. Proprietary model by OpenAI. Unmatched reasoning, creativity, and multimodal intelligence.">💎 GPT 5.2 (OpenAI Flex)</option>
                         <option value="gpt-5.1" title="High-tier OpenAI model. Very nice at technical writing and nuanced instruction following.">💎 GPT 5.1 (OpenAI Flex)</option>
                         <option value="gpt-5" title="The base GPT-5 model. Extremely capable across all domains including complex science.">💎 GPT 5 (OpenAI Flex)</option>
-                        <option value="gpt-5-mini" title="Efficient version of GPT-5. Fast but retains high-level reasoning.">❄️ GPT 5 Mini (OpenAI Flex)</option>
-                        <option value="gpt-5-nano" title="Lightweight frontier model for instant responses with smart logic.">❄️ GPT 5 Nano (OpenAI Flex)</option>
-                        <option value="o4-mini" title="Specialized reasoning model for high-efficiency logic tasks.">❄️ GPT o4 Mini (OpenAI Flex)</option>
-                        <option value="gpt-4.1-nano" title="Refined GPT-4 architecture in a small, fast package.">✨ GPT 4.1 Nano (OpenAI)</option>
-                        <option value="gpt-4o-mini" title="OpenAI's most cost-effective smart model. Great for general tasks.">✨ GPT 4o Mini (OpenAI)</option>
                     </optgroup>
                 </select>
             </div>
@@ -822,8 +822,8 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    model: 'gemma3:27b', 
-                    messages: [{ role: 'user', content: `Please generate a very short, concise English title (maximum 5 words) for a chat session that starts with this message: "${userMessage}". Return ONLY the title text, nothing else.` }] 
+                    model: 'gpt-5-nano', 
+                    messages: [{ role: 'user', content: `Please generate a very short, concise English title (maximum 3 words, recommand 2 words) for a chat session that starts with this message: "${userMessage}". Return ONLY the title text, nothing else.` }] 
                 })
             });
             const reader = res.body.getReader();
