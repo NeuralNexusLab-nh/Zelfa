@@ -11,7 +11,7 @@ app.set('trust proxy', true);
 
 // Debug Log
 app.use((req, res, next) => {
-    console.log("Req's path is " + req.path + " method: " + " body: " + req.body || none + " PID: " + process.pid);
+    console.log("Req's path is " + req.path + " method: " + " body: " + req.body || "none" + " PID: " + process.pid);
     next();
 });
 
@@ -94,14 +94,15 @@ let lastRequestTime = 0;
 
 app.post('/api/models', async (req, res) => {
     const now = Date.now();
-    if (now - lastRequestTime < 5000) {
+    if (now - lastRequestTime < 5000 && (req.body.model || "none") !== 'gpt-5-nano') {
         return res
             .status(403)
             .type("text")
             .send("ERROR 403 Access Denied: Do not abuse server resources.");
     }
-    lastRequestTime = Date.now();
-
+    if ((req.body.model || "none") !== 'gpt-5-nano') {
+      lastRequestTime = Date.now();
+    }
     try {
         const { model, messages } = req.body;
         const config = MODEL_REGISTRY[model];
