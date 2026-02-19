@@ -42,6 +42,7 @@ const MODEL_REGISTRY = {
     'gemini-3-flash-preview': { provider: 'Ollama' },
     'nemotron-3-nano:30b': { provider: 'Ollama' },
     'qwen3-next:80b': { provider: 'Ollama' },
+    'qwen3.5:397b' : { provider: 'Ollama' },
     'gpt-5-nano': { provider: 'OpenAI', flex: true },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
