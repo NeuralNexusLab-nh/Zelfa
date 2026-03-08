@@ -57,7 +57,8 @@ const MODEL_REGISTRY = {
     'gpt-5.1': { provider: 'OpenAI', flex: true },
     'gpt-5.2': { provider: 'OpenAI', flex: true },
     'gpt-3.5-turbo': { provider: 'OpenAI' },
-    'o4-mini': { provider: 'OpenAI', flex: true }
+    'o4-mini': { provider: 'OpenAI', flex: true },
+    'gpt-5.4': { provider: 'OpenAI', flex: true }
 };
 
 // --- FILE INIT ---
@@ -192,7 +193,7 @@ app.post('/api/models', async (req, res) => {
         }
 
         const recentMessages = (messages || [])
-            .slice(-10)
+            .slice(-6)
             .map(m => ({
                 role: m.role === 'ai' ? 'assistant' : m.role,
                 content: m.content
