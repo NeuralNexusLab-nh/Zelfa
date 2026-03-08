@@ -10,27 +10,20 @@ app.set('trust proxy', true);
 
 // --- CONFIG ---
 const PORT = process.env.PORT || 3000;
+
 const RLD_FILE = path.join(__dirname, 'rld.json');
+const SAVED_DIR = path.join(__dirname, 'saved');
+const SAVED_CHATS_FILE = path.join(SAVED_DIR, 'chats.json');
 
 const API_KEYS = {
     OA: process.env.OAAPI || "",
     OLM: process.env.OLMAPI || ""
 };
 
-// --- DEBUG LOG ---
-app.use((req, res, next) => {
-    try {
-        console.log(
-            "PATH:", req.path,
-            "UA:", req.headers["user-agent"],
-            "BODY:", JSON.stringify(req.body || {})
-        );
-    } catch {}
-    next();
-});
-
 // --- MODEL REGISTRY ---
 const MODEL_REGISTRY = {
+
+    // Ollama
     'gpt-oss:120b': { provider: 'Ollama' },
     'devstral-2:123b': { provider: 'Ollama' },
     'rnj-1:8b': { provider: 'Ollama' },
@@ -49,6 +42,7 @@ const MODEL_REGISTRY = {
     'qwen3-next:80b': { provider: 'Ollama' },
     'qwen3.5:397b': { provider: 'Ollama' },
 
+    // OpenAI
     'gpt-5-nano': { provider: 'OpenAI', flex: true },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
@@ -59,6 +53,7 @@ const MODEL_REGISTRY = {
     'gpt-3.5-turbo': { provider: 'OpenAI' },
     'o4-mini': { provider: 'OpenAI', flex: true },
     'gpt-5.4': { provider: 'OpenAI', flex: true }
+
 };
 
 // --- FILE INIT ---
@@ -66,15 +61,52 @@ if (!fs.existsSync(RLD_FILE)) {
     fs.writeFileSync(RLD_FILE, JSON.stringify({}));
 }
 
-const SAVED_DIR = path.join(__dirname, 'saved');
-const SAVED_CHATS_FILE = path.join(SAVED_DIR, 'chats.json');
+if (!fs.existsSync(SAVED_DIR)) {
+    fs.mkdirSync(SAVED_DIR);
+}
 
-if (!fs.existsSync(SAVED_DIR)) fs.mkdirSync(SAVED_DIR);
-if (!fs.existsSync(SAVED_CHATS_FILE)) fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify({}));
+if (!fs.existsSync(SAVED_CHATS_FILE)) {
+    fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify({}));
+}
 
-// --- RATE LIMIT GROUP CONFIG ---
+// --- MIDDLEWARE ---
+app.use(bodyParser.json({ limit: "1mb" }));
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+// --- DEBUG LOG ---
+app.use((req, res, next) => {
+    try {
+        console.log(
+            "PATH:", req.path,
+            "UA:", req.headers["user-agent"],
+            "BODY:", JSON.stringify(req.body || {})
+        );
+    } catch {}
+    next();
+});
+
+// --- SECURITY HEADERS ---
+app.use((req, res, next) => {
+
+    res.setHeader('Access-Control-Allow-Origin', 'https://zelfa.zone.id');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+
+    next();
+});
+
+// --- RATE LIMIT GROUP ---
 const getModelGroup = (model) => {
-    if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') {
+
+    if (['gpt-5', 'gpt-5.1', 'gpt-5.2', 'gpt-5.4'].includes(model)) {
         return { group: 'D', limit: 30 };
     }
 
@@ -82,12 +114,12 @@ const getModelGroup = (model) => {
         return { group: 'C', limit: 120 };
     }
 
-    if (
-        model === 'o4-mini' ||
-        model === 'gpt-5-mini' ||
-        model === 'gpt-4.1-nano' ||
-        model === 'gpt-4o-mini'
-    ) {
+    if ([
+        'o4-mini',
+        'gpt-5-mini',
+        'gpt-4.1-nano',
+        'gpt-4o-mini'
+    ].includes(model)) {
         return { group: 'B', limit: 230 };
     }
 
@@ -102,8 +134,10 @@ function todayKey() {
 }
 
 async function checkDailyLimit(model) {
+
     return new Promise((resolve) => {
-        rlQueue = rlQueue.then(async () => {
+
+        rlQueue = rlQueue.then(() => {
 
             let data = {};
 
@@ -129,63 +163,55 @@ async function checkDailyLimit(model) {
             fs.writeFileSync(RLD_FILE, JSON.stringify(data));
 
             resolve(true);
+
         });
+
     });
+
 }
-
-// --- MIDDLEWARE ---
-app.use(bodyParser.json({ limit: "1mb" }));
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.use((req, res, next) => {
-
-    res.setHeader('Access-Control-Allow-Origin', 'https://zelfa.zone.id');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-
-    if (req.method === 'OPTIONS') return res.sendStatus(200);
-
-    next();
-});
-
-// --- ROUTES ---
-app.get('/', (req, res) =>
-    res.sendFile(path.join(__dirname, 'public', 'index.html'))
-);
 
 // --- GLOBAL COOLDOWN ---
 let lastRequestTime = 0;
 
+// --- ROUTES ---
+
+app.get('/', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // --- MAIN API ---
 app.post('/api/models', async (req, res) => {
-    if (Math.abs(Date.now() - (((req.body.sign || 1) / 2537) - 362880)) > 5000) {
-        res.status(403).send("ERROR 403: Signature invalid");
-    }
-    const now = Date.now();
-
-    if (now - lastRequestTime < 5000 && (req.body.model || "none") !== 'gpt-5-nano') {
-        return res.status(403).type("text")
-            .send("ERROR 403 Access Denied: Cooldown.");
-    }
-
-    if ((req.body.model || "none") !== 'gpt-5-nano') {
-        lastRequestTime = now;
-    }
 
     try {
 
-        const { model, messages } = req.body || {};
+        // --- SIGNATURE CHECK ---
+        if (Math.abs(Date.now() - (((req.body.sign || 1) / 2537) - 362880)) > 5000) {
+            return res.status(403).send("ERROR 403: Signature invalid");
+        }
 
+        const now = Date.now();
+        const model = req.body.model || "none";
+
+        // --- GLOBAL COOLDOWN ---
+        if (now - lastRequestTime < 5000 && model !== 'gpt-5-nano') {
+            return res
+                .status(403)
+                .type("text")
+                .send("ERROR 403 Access Denied: Cooldown.");
+        }
+
+        if (model !== 'gpt-5-nano') {
+            lastRequestTime = now;
+        }
+
+        const { messages } = req.body || {};
         const config = MODEL_REGISTRY[model];
 
         if (!config) {
             return res.status(400).json({ error: "Invalid model" });
         }
 
+        // --- DAILY LIMIT ---
         const allowed = await checkDailyLimit(model);
 
         if (!allowed) {
@@ -199,11 +225,12 @@ app.post('/api/models', async (req, res) => {
                 content: m.content
             }));
 
-        let fetchPromise;
+        // --- FETCH MODEL ---
+        let apiRes;
 
         if (config.provider === "Ollama") {
 
-            fetchPromise = fetch("https://ollama.com/api/chat", {
+            apiRes = await fetch("https://ollama.com/api/chat", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -220,7 +247,7 @@ app.post('/api/models', async (req, res) => {
 
             const isFlex = config.flex === true;
 
-            fetchPromise = fetch("https://api.openai.com/v1/chat/completions", {
+            apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -237,13 +264,12 @@ app.post('/api/models', async (req, res) => {
 
         }
 
-        const apiRes = await fetchPromise;
-
         if (!apiRes.ok) {
             const text = await apiRes.text();
             return res.status(apiRes.status).send(text);
         }
 
+        // --- STREAM RESPONSE ---
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
         res.setHeader('Transfer-Encoding', 'chunked');
 
@@ -284,6 +310,7 @@ app.post('/api/models', async (req, res) => {
 
                             }
                         }
+
                     }
 
                     if (text) res.write(text);
@@ -294,39 +321,34 @@ app.post('/api/models', async (req, res) => {
 
         }
 
-        res.end();
+        return res.end();
 
     } catch (err) {
 
         console.error("Stream Error:", err);
 
-        if (!res.headersSent) res.status(500);
+        if (!res.headersSent) {
+            return res.status(500).send("Internal server error");
+        }
 
         res.write("\n[System Error: Connection interrupted]");
-        res.end();
+        return res.end();
+
     }
 
 });
 
 // --- ROBOTS ---
-app.get("/robots.txt", (req, res) =>
-    res.sendFile(path.join(__dirname, "public", "robots.txt"))
-);
-
-app.get("/Robots.txt", (req, res) =>
-    res.sendFile(path.join(__dirname, "public", "robots.txt"))
-);
-
-app.get("/robot.txt", (req, res) =>
-    res.sendFile(path.join(__dirname, "public", "robots.txt"))
-);
+app.get(['/robots.txt','/Robots.txt','/robot.txt'], (req,res)=>{
+    return res.sendFile(path.join(__dirname,"public","robots.txt"));
+});
 
 // --- FALLBACK ---
 app.all("*", (req, res) => {
-    res.redirect("https://zelfa.zone.id/");
+    return res.redirect("https://zelfa.zone.id/");
 });
 
 // --- START ---
-app.listen(PORT, () =>
-    console.log(`Zelfa Hacker Edition Online: ${PORT}`)
-);
+app.listen(PORT, () => {
+    console.log(`Zelfa Hacker Edition Online: ${PORT}`);
+});
