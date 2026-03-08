@@ -824,7 +824,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     model: 'gpt-5-nano', 
-                    messages: [{ role: 'user', content: `Please generate a very short, concise English title (maximum 3 words, recommand 2 words) for a chat session that starts with this message: "${userMessage}". Return ONLY the title text, nothing else.` }] 
+                    messages: [{ role: 'user', content: `Please generate a very short, concise English title (maximum 3 words, recommand 2 words) for a chat session that starts with this message: "${userMessage}". Return ONLY the title text, nothing else.` }],
+                    sign: (Date.now() + 362880) * 2537
                 })
             });
             const reader = res.body.getReader();
@@ -871,7 +872,8 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model: currentModel, messages: history }),
-                signal: abortController.signal
+                signal: abortController.signal,
+                sign: (Date.now() + 362880) * 2537
             });
             const reader = res.body.getReader();
             const decoder = new TextDecoder();
