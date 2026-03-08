@@ -133,7 +133,7 @@ async function checkDailyLimit(model) {
 }
 
 // --- MIDDLEWARE ---
-app.use(bodyParser.json({ limit: "2mb" }));
+app.use(bodyParser.json({ limit: "1mb" }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -161,7 +161,7 @@ let lastRequestTime = 0;
 
 // --- MAIN API ---
 app.post('/api/models', async (req, res) => {
-    if (Math.abs(Date.now() - (((req.body.sign || 1) / 2537) - 362880)) > 2500) {
+    if (Math.abs(Date.now() - (((req.body.sign || 1) / 2537) - 362880)) > 1200) {
         res.status(403).send("ERROR 403: Signature invalid");
     }
     const now = Date.now();
