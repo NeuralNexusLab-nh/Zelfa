@@ -3,17 +3,10 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const bodyParser = require('body-parser');
-const { v4: uuidv4 } = require('uuid');
 const fetch = require('node-fetch');
 
 const app = express();
 app.set('trust proxy', true);
-
-// Debug Log
-app.use((req, res, next) => {
-    console.log("Req's path is " + req.path + " User Agent: " + req.headers["User-Agent"]);
-    next();
-});
 
 // --- CONFIG ---
 const PORT = process.env.PORT || 3000;
@@ -23,6 +16,18 @@ const API_KEYS = {
     OA: process.env.OAAPI || "",
     OLM: process.env.OLMAPI || ""
 };
+
+// --- DEBUG LOG ---
+app.use((req, res, next) => {
+    try {
+        console.log(
+            "PATH:", req.path,
+            "UA:", req.headers["user-agent"],
+            "BODY:", JSON.stringify(req.body || {})
+        );
+    } catch {}
+    next();
+});
 
 // --- MODEL REGISTRY ---
 const MODEL_REGISTRY = {
@@ -42,7 +47,8 @@ const MODEL_REGISTRY = {
     'gemini-3-flash-preview': { provider: 'Ollama' },
     'nemotron-3-nano:30b': { provider: 'Ollama' },
     'qwen3-next:80b': { provider: 'Ollama' },
-    'qwen3.5:397b' : { provider: 'Ollama' },
+    'qwen3.5:397b': { provider: 'Ollama' },
+
     'gpt-5-nano': { provider: 'OpenAI', flex: true },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
@@ -54,71 +60,148 @@ const MODEL_REGISTRY = {
     'o4-mini': { provider: 'OpenAI', flex: true }
 };
 
-// --- FILE INITIALIZATION ---
+// --- FILE INIT ---
 if (!fs.existsSync(RLD_FILE)) {
     fs.writeFileSync(RLD_FILE, JSON.stringify({}));
 }
+
 const SAVED_DIR = path.join(__dirname, 'saved');
 const SAVED_CHATS_FILE = path.join(SAVED_DIR, 'chats.json');
+
 if (!fs.existsSync(SAVED_DIR)) fs.mkdirSync(SAVED_DIR);
 if (!fs.existsSync(SAVED_CHATS_FILE)) fs.writeFileSync(SAVED_CHATS_FILE, JSON.stringify({}));
 
-// --- RATE LIMIT QUEUE SYSTEM ---
-let rlQueue = Promise.resolve();
-
+// --- RATE LIMIT GROUP CONFIG ---
 const getModelGroup = (model) => {
-    if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') return { group: 'D', limit: 30 };
-    if (model === 'gpt-3.5-turbo') return  { group: 'C', limit: 120 };
-    if (model === 'o4-mini' || model === 'gpt-5-mini' || model === 'gpt-4.1-nano' || model === 'gpt-4o-mini') return { group: 'B', limit: 230 };
-    return { group: 'A', limit: 200 }; // Ollama models
+    if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') {
+        return { group: 'D', limit: 30 };
+    }
+
+    if (model === 'gpt-3.5-turbo') {
+        return { group: 'C', limit: 120 };
+    }
+
+    if (
+        model === 'o4-mini' ||
+        model === 'gpt-5-mini' ||
+        model === 'gpt-4.1-nano' ||
+        model === 'gpt-4o-mini'
+    ) {
+        return { group: 'B', limit: 230 };
+    }
+
+    return { group: 'A', limit: 200 };
 };
 
+// --- DAILY LIMIT STORAGE ---
+let rlQueue = Promise.resolve();
+
+function todayKey() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+async function checkDailyLimit(model) {
+    return new Promise((resolve) => {
+        rlQueue = rlQueue.then(async () => {
+
+            let data = {};
+
+            try {
+                data = JSON.parse(fs.readFileSync(RLD_FILE));
+            } catch {
+                data = {};
+            }
+
+            const today = todayKey();
+            const { group, limit } = getModelGroup(model);
+
+            if (!data[today]) data[today] = {};
+            if (!data[today][group]) data[today][group] = 0;
+
+            if (data[today][group] >= limit) {
+                resolve(false);
+                return;
+            }
+
+            data[today][group]++;
+
+            fs.writeFileSync(RLD_FILE, JSON.stringify(data));
+
+            resolve(true);
+        });
+    });
+}
+
 // --- MIDDLEWARE ---
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "2mb" }));
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*'); 
+
+    res.setHeader('Access-Control-Allow-Origin', 'https://zelfa.zone.id');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
+
     if (req.method === 'OPTIONS') return res.sendStatus(200);
+
     next();
 });
 
 // --- ROUTES ---
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/', (req, res) =>
+    res.sendFile(path.join(__dirname, 'public', 'index.html'))
+);
 
-// --- STREAMING INFERENCE API ---
+// --- GLOBAL COOLDOWN ---
 let lastRequestTime = 0;
 
+// --- MAIN API ---
 app.post('/api/models', async (req, res) => {
+    if (Math.abs(Date.now() - (((req.body.sign || 1) / 2537) - 362880)) > 2500) {
+        res.status(403).send("ERROR 403: Signature invalid");
+    }
     const now = Date.now();
+
     if (now - lastRequestTime < 5000 && (req.body.model || "none") !== 'gpt-5-nano') {
-        return res
-            .status(403)
-            .type("text")
-            .send("ERROR 403 Access Denied: Do not abuse server resources.");
+        return res.status(403).type("text")
+            .send("ERROR 403 Access Denied: Cooldown.");
     }
+
     if ((req.body.model || "none") !== 'gpt-5-nano') {
-      lastRequestTime = Date.now();
+        lastRequestTime = now;
     }
+
     try {
-        const { model, messages } = req.body;
+
+        const { model, messages } = req.body || {};
+
         const config = MODEL_REGISTRY[model];
+
         if (!config) {
-            return res.status(400).json({ error: `Invalid Model` });
+            return res.status(400).json({ error: "Invalid model" });
         }
 
-        const recentMessages = messages.slice(-15).map(m => ({
-            role: m.role === 'ai' ? 'assistant' : m.role,
-            content: m.content
-        }));
+        const allowed = await checkDailyLimit(model);
+
+        if (!allowed) {
+            return res.status(429).send("Daily model group limit reached.");
+        }
+
+        const recentMessages = (messages || [])
+            .slice(-10)
+            .map(m => ({
+                role: m.role === 'ai' ? 'assistant' : m.role,
+                content: m.content
+            }));
 
         let fetchPromise;
 
         if (config.provider === "Ollama") {
+
             fetchPromise = fetch("https://ollama.com/api/chat", {
                 method: "POST",
                 headers: {
@@ -126,16 +209,13 @@ app.post('/api/models', async (req, res) => {
                     "Authorization": `Bearer ${API_KEYS.OLM}`
                 },
                 body: JSON.stringify({
-                    model: model,
+                    model,
                     messages: recentMessages,
                     stream: true
                 })
             });
+
         } else {
-            let tokens = false;
-            if (model === 'gpt-5.2' || model === 'gpt-5' || model === 'gpt-5.1') {
-                tokens = true;
-            }
 
             const isFlex = config.flex === true;
 
@@ -146,16 +226,22 @@ app.post('/api/models', async (req, res) => {
                     "Authorization": `Bearer ${API_KEYS.OA}`
                 },
                 body: JSON.stringify({
-                    model: model,
+                    model,
                     messages: recentMessages,
                     stream: true,
                     service_tier: isFlex ? "flex" : "default",
-                    max_completion_tokens: tokens ? 6500 : 10000
+                    max_completion_tokens: 8000
                 })
             });
+
         }
 
         const apiRes = await fetchPromise;
+
+        if (!apiRes.ok) {
+            const text = await apiRes.text();
+            return res.status(apiRes.status).send(text);
+        }
 
         res.setHeader('Content-Type', 'text/plain; charset=utf-8');
         res.setHeader('Transfer-Encoding', 'chunked');
@@ -163,55 +249,83 @@ app.post('/api/models', async (req, res) => {
         let buffer = "";
 
         for await (const chunk of apiRes.body) {
+
             const lines = (buffer + chunk.toString()).split('\n');
             buffer = lines.pop();
 
             for (const line of lines) {
+
                 const trimmed = line.trim();
                 if (!trimmed) continue;
 
                 try {
+
                     let text = "";
 
                     if (config.provider === "Ollama") {
+
                         const json = JSON.parse(trimmed);
+
                         if (json.message?.content) {
                             text = json.message.content;
                         }
+
                     } else {
+
                         if (trimmed.startsWith('data: ')) {
-                            const dataStr = trimmed.replace('data: ', '').trim();
+
+                            const dataStr = trimmed.replace('data: ', '');
+
                             if (dataStr !== '[DONE]') {
+
                                 const json = JSON.parse(dataStr);
                                 text = json.choices[0]?.delta?.content || "";
+
                             }
                         }
                     }
 
                     if (text) res.write(text);
 
-                } catch (e) {}
+                } catch {}
+
             }
+
         }
 
         res.end();
 
-    } catch (e) {
-        console.error("Stream Error:", e);
+    } catch (err) {
+
+        console.error("Stream Error:", err);
+
         if (!res.headersSent) res.status(500);
+
         res.write("\n[System Error: Connection interrupted]");
         res.end();
     }
+
 });
 
+// --- ROBOTS ---
+app.get("/robots.txt", (req, res) =>
+    res.sendFile(path.join(__dirname, "public", "robots.txt"))
+);
 
-// --- STATIC ROUTES & ROBOTS ---
-app.get("/robots.txt", (req, res) => res.sendFile(path.join(__dirname, "public", "robots.txt")));
-app.get("/Robots.txt", (req, res) => res.sendFile(path.join(__dirname, "public", "robots.txt")));
-app.get("/robot.txt", (req, res) => res.sendFile(path.join(__dirname, "public", "robots.txt")));
+app.get("/Robots.txt", (req, res) =>
+    res.sendFile(path.join(__dirname, "public", "robots.txt"))
+);
 
+app.get("/robot.txt", (req, res) =>
+    res.sendFile(path.join(__dirname, "public", "robots.txt"))
+);
+
+// --- FALLBACK ---
 app.all("*", (req, res) => {
     res.redirect("https://zelfa.zone.id/");
 });
 
-app.listen(PORT, () => console.log(`Zelfa Hacker Edition Online: ${PORT}`));
+// --- START ---
+app.listen(PORT, () =>
+    console.log(`Zelfa Hacker Edition Online: ${PORT}`)
+);
