@@ -872,7 +872,7 @@
             const res = await fetch('/api/models', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: currentModel, messages: history, sign: (Date.now() + 362880) * 2537}),
+                body: JSON.stringify({ model: currentModel, messages: history}),
                 signal: abortController.signal
             });
             const reader = res.body.getReader();
