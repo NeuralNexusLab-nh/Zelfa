@@ -184,11 +184,6 @@ app.post('/api/models', async (req, res) => {
 
     try {
 
-        // --- SIGNATURE CHECK ---
-        if (Math.abs(Date.now() - (((req.body.sign || 1) / 2537) - 362880)) > 5000) {
-            return res.status(403).send("ERROR 403: Signature invalid");
-        }
-
         const now = Date.now();
         const model = req.body.model || "none";
 
