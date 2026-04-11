@@ -94,7 +94,7 @@ app.use((req, res, next) => {
 // --- SECURITY HEADERS ---
 app.use((req, res, next) => {
 
-    res.setHeader('Access-Control-Allow-Origin', 'https://zelfa.zone.id');
+    res.setHeader('Access-Control-Allow-Origin', 'https://zelfa.cmd.page/');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
