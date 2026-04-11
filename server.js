@@ -41,18 +41,23 @@ const MODEL_REGISTRY = {
     'nemotron-3-nano:30b': { provider: 'Ollama' },
     'qwen3-next:80b': { provider: 'Ollama' },
     'qwen3.5:397b': { provider: 'Ollama' },
+    'gemma4:31b': { provider: 'Ollama' },
 
     // OpenAI
+    'gpt-4o': { provider: 'OpenAI', flex: true },
+    'gpt-4.1': { provider: 'OpenAI', flex: true },
     'gpt-5-nano': { provider: 'OpenAI', flex: true },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
     'gpt-5-mini': { provider: 'OpenAI', flex: true },
+    'gpt-3.5-turbo': { provider: 'OpenAI' },
     'gpt-5': { provider: 'OpenAI', flex: true },
     'gpt-5.1': { provider: 'OpenAI', flex: true },
     'gpt-5.2': { provider: 'OpenAI', flex: true },
-    'gpt-3.5-turbo': { provider: 'OpenAI' },
     'o4-mini': { provider: 'OpenAI', flex: true },
-    'gpt-5.4': { provider: 'OpenAI', flex: true }
+    'gpt-5.4': { provider: 'OpenAI', flex: true },
+    'gpt-5.4-nano': { provider: 'OpenAI', flex: true },
+    'gpt-5.4-mini': { provider: 'OpenAI', flex: true }
 
 };
 
@@ -106,7 +111,7 @@ app.use((req, res, next) => {
 // --- RATE LIMIT GROUP ---
 const getModelGroup = (model) => {
 
-    if (['gpt-5', 'gpt-5.1', 'gpt-5.2', 'gpt-5.4'].includes(model)) {
+    if (['gpt-5', 'gpt-5.1', 'gpt-5.2', 'gpt-5.4', 'gpt-4.1', 'gpt-4o'].includes(model)) {
         return { group: 'D', limit: 30 };
     }
 
@@ -118,7 +123,9 @@ const getModelGroup = (model) => {
         'o4-mini',
         'gpt-5-mini',
         'gpt-4.1-nano',
-        'gpt-4o-mini'
+        'gpt-4o-mini',
+        'gpt-5.4-nano',
+        'gpt-5.4-mini'
     ].includes(model)) {
         return { group: 'B', limit: 230 };
     }
