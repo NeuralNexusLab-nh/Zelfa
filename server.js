@@ -43,8 +43,8 @@ const MODEL_REGISTRY = {
     'qwen3.5:397b': { provider: 'Ollama' },
 
     // OpenAI
-    'gpt-4o': { provider: 'OpenAI', flex: true },
-    'gpt-4.1': { provider: 'OpenAI', flex: true },
+    'gpt-4o': { provider: 'OpenAI'},
+    'gpt-4.1': { provider: 'OpenAI'},
     'gpt-5-nano': { provider: 'OpenAI', flex: true },
     'gpt-4o-mini': { provider: 'OpenAI' },
     'gpt-4.1-nano': { provider: 'OpenAI' },
