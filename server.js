@@ -41,7 +41,6 @@ const MODEL_REGISTRY = {
     'nemotron-3-nano:30b': { provider: 'Ollama' },
     'qwen3-next:80b': { provider: 'Ollama' },
     'qwen3.5:397b': { provider: 'Ollama' },
-    'deepseek-v4-flash': { provider: 'Ollama' },
 
     // OpenAI
     'gpt-4o': { provider: 'OpenAI', flex: true },
